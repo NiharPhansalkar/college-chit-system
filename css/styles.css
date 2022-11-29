@@ -1,0 +1,55 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    height: 100vh;
+    background-image: linear-gradient(to right, #2193b0, #6dd5ed);
+}
+
+/* Setting the background */
+
+#background {
+    display: grid;
+    row-gap: 1.5rem;
+    grid-template-columns: repeat(3, 400px);
+    justify-content: space-evenly;
+}
+
+/* Styling the card */
+
+.card {
+    /* border: 2px solid black; */
+    height: 400px;
+    width: 400px;
+    border-radius: 10px;
+    margin-top: 2rem;
+    position: relative;
+    background-image: 
+    repeating-linear-gradient(
+        white, white 25px,
+        #9198e5 26px, #9198e5 27px
+    );
+    overflow: hidden;
+}
+
+.left-margin {
+    position: absolute;
+    height: 100%;
+    width: 0.15rem;
+    background-color: pink;
+    left: 2.5rem;
+}
+
+header {
+    height: 50px;
+    border-radius: 10px 10px 0px 0px;
+    background-image: 
+    linear-gradient(
+        white, white 80%,
+        pink 95%, pink
+    );  
+    background-position-y: -15px;
+}
