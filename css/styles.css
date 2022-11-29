@@ -33,6 +33,13 @@ body {
         #9198e5 26px, #9198e5 27px
     );
     overflow: hidden;
+    transition: transform 0.8s;
+}
+
+/* Class to help rotate the card after clicking on it */
+
+.card-rotate {
+    transform: rotateY(180deg);
 }
 
 .left-margin {
@@ -52,4 +59,10 @@ header {
         pink 95%, pink
     );  
     background-position-y: -15px;
+}
+
+.text-align {
+    margin-left: 3rem;
+    line-height: 27px;
+    margin-top: 8px;
 }
