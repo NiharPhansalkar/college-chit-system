@@ -1,3 +1,7 @@
-const cardContent = document.querySelectorAll(".card-content");
+const cardContent = Array.from(document.querySelectorAll(".card-content"));
 
-console.log(cardContent);
+cardContent.forEach((individualCard) => {
+    individualCard.addEventListener("click", () => {
+        individualCard.classList.toggle("is-flipped");
+    })
+})

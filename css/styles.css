@@ -61,7 +61,12 @@ body {
 }
 
 .card-front {
-    background-image: linear-gradient(to bottom right, var(--primary-color), var(--secondary-color));
+    background-image: 
+        linear-gradient(
+            to bottom right, 
+            var(--primary-color), 
+            var(--secondary-color)
+        );
     display: flex;
     align-items: center;
     justify-content: center;
@@ -96,7 +101,7 @@ body {
             var(--primary-color) 15%, 
             var(--secondary-color) 115%
         );
-    border-radius: 0 0 50% 0;
+    border-radius: 0 0 50% 50%;
 }
 
 .card-body {
