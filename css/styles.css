@@ -21,7 +21,6 @@ body {
 /* Styling the card */
 
 .card {
-    /* border: 2px solid black; */
     height: 400px;
     width: 400px;
     border-radius: 10px;
@@ -38,16 +37,24 @@ body {
 
 /* Class to help rotate the card after clicking on it */
 
-.card-rotate {
+/* .card:hover {
     transform: rotateY(180deg);
-}
+} */
 
-.left-margin {
+.no-rotate-margin {
     position: absolute;
     height: 100%;
     width: 0.15rem;
     background-color: pink;
     left: 2.5rem;
+}
+
+.rotated-margin {
+    position: absolute;
+    height: 100%;
+    width: 0.15rem;
+    background-color: pink;
+    left: 88%;
 }
 
 header {
@@ -61,8 +68,15 @@ header {
     background-position-y: -15px;
 }
 
-.text-align {
+.text-format-front {
     margin-left: 3rem;
+    line-height: 27px;
+    margin-top: 8px;
+}
+
+.text-format-back {
+    transform: rotateY(180deg);
+    margin-right: 3.5rem;
     line-height: 27px;
     margin-top: 8px;
 }
