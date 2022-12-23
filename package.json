@@ -1,0 +1,19 @@
+{
+  "name": "college-chit-system",
+  "version": "1.0.0",
+  "description": "It is a system that will show chits for practical exams in college",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NiharPhansalkar/college-chit-system.git"
+  },
+  "author": "Nihar Phansalkar",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/NiharPhansalkar/college-chit-system/issues"
+  },
+  "homepage": "https://github.com/NiharPhansalkar/college-chit-system#readme"
+}
