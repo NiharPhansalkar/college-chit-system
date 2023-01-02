@@ -9,7 +9,7 @@ const server = http.createServer((req, res) => {
         fs.readFile("../index.html", (error, data) => {
             if (error) {
                 res.writeHead(404);
-                res.write("Error: File not found");
+                res.write("Error: Page not found");
             } else {
                 res.write(data);
             }
