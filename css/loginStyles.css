@@ -1,0 +1,20 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* Styling the navbar */
+
+.navbar ul{
+    display: flex;
+    margin: 1.5rem 0 1.5rem 0;
+}
+.navbar ul li a {
+    text-decoration: none;
+    display: block;
+}
+.navbar ul li {
+    list-style-type: none;
+    padding-right: 2rem;
+}
