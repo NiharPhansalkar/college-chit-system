@@ -16,20 +16,32 @@
             <li><a href="#">About</a></li>
         </ul>
     </nav>
-    <div class="login_info">
-        <form action="" method="get">
-            <fieldset>
-                <legend>Login Details</legend>
-                <div class="form_elements">
-                    <label for="email">Email:</label>
-                    <input type="email" id="email">
-                </div> 
-                <div class="form_elements">
-                    <label for="password">Password:</label>
-                    <input type="password" id="password">
-                </div>
-            </fieldset>
+    <div class="login-info">
+        <form action="" class="form">
+            <img src="./images/avatar.png" id="avatar" alt="avatar">
+            <h2>Login</h2>
+            <div class="input-group">
+                <input type="email" name="user-email" id="user-email" required>
+                <label for="email">Email</label>
+            </div>
+            <div class="input-group">
+                <input type="password" name="user-password" id="user-password" required>
+                <label for="user-password">Password</label>
+                <button type="submit" class="submit-btn">Login</button>
+                <a href=".forgot-pswd" class="forgot-pass">Forgot Password?</a>
+            </div>
         </form>
+        <div class="forgot-pswd">
+            <form action="" class="form">
+                <a href="#" class="close">&times;</a>
+                <h2>Reset Password</h2>
+                <div class="input-group">
+                    <input type="email" name="user-email" id="user-email" required>
+                    <label for="email">Email</label>
+                </div>
+                <button type="submit" class="submit-btn">Login</button>
+            </form>
+        </div>
     </div>
 </body>
 </html>
