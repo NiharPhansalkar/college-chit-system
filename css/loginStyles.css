@@ -3,9 +3,14 @@
     margin: 0;
     padding: 0;
 }
+body {
+    height: 100%;
+}
 
 /* Styling the navbar */
-
+.navbar {
+    background-color: orange;
+}
 .navbar ul{
     display: flex;
     margin: 1.5rem 0 1.5rem 0;
@@ -21,15 +26,27 @@
 
 /* Styling the login form */
 
-.login_info fieldset{
+.form_fieldset {
     height: 9rem;
-    width: 16rem;
+    width: 25rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+}
+.login_info {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /*height: calc(100vh - 3px);*/
+    overflow: hidden;
 }
 
 .form_elements {
     display: grid;
-    grid-template-columns: max-content max-content;
+    grid-template-columns: 1fr 4fr; 
     grid-gap: 5px;
+    margin: 6px 0px 8px 0px;
 }
 .form_elements label {
     text-align: right;
