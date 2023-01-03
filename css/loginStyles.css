@@ -18,3 +18,19 @@
     list-style-type: none;
     padding-right: 2rem;
 }
+
+/* Styling the login form */
+
+.login_info fieldset{
+    height: 9rem;
+    width: 16rem;
+}
+
+.form_elements {
+    display: grid;
+    grid-template-columns: max-content max-content;
+    grid-gap: 5px;
+}
+.form_elements label {
+    text-align: right;
+}
