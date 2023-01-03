@@ -3,9 +3,6 @@
     margin: 0;
     padding: 0;
 }
-body {
-    height: 100%;
-}
 
 /* Styling the navbar */
 .navbar {
@@ -13,15 +10,18 @@ body {
 }
 .navbar ul{
     display: flex;
-    margin: 1.5rem 0 1.5rem 0;
+    align-items: center;
+    height: 4rem;
+    margin: 0 0 1.5rem 0;
 }
 .navbar ul li a {
     text-decoration: none;
-    display: block;
+    color: black;
 }
 .navbar ul li {
     list-style-type: none;
     padding-right: 2rem;
+    font-size: 24px;
 }
 
 /* Styling the login form */
