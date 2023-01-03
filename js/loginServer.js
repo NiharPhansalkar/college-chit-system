@@ -19,6 +19,16 @@ const server = http.createServer((req, res) => {
         let fileStream = fs.createReadStream(cssPath);
         res.writeHead(200, {"Content" : "text/css"});
         fileStream.pipe(res);
+    }else if (req.url.match(/.png$/)) {
+        const imgPath = path.join(path.resolve(__dirname, "../"), req.url);
+        let fileStream = fs.createReadStream(imgPath);
+        res.writeHead(200, {"Content" : "image/png"});
+        fileStream.pipe(res);
+    }else if (req.url.match(/.jpg$/)) {
+        const imgPath = path.join(path.resolve(__dirname, "../"), req.url);
+        let fileStream = fs.createReadStream(imgPath);
+        res.writeHead(200, {"Content" : "image/jpg"});
+        fileStream.pipe(res);
     }
 });
 
