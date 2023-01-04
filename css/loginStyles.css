@@ -112,7 +112,7 @@ body {
 .translate-label {
     transform: translateY(-18px);
     color: #ff652f;
-    font-size: 0.8rem;
+    font-size: 0.8rem !important;
 }
 /*
 .form .input-group input:focus + label,
