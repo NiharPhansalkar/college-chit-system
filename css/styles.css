@@ -18,7 +18,8 @@
 
 body {
     min-height: 100vh;
-    background-color: bisque;
+    background: url(../images/bg.jpg) center no-repeat;
+    background-size: cover;
 }
 
 /* Setting the background */
@@ -63,11 +64,19 @@ body {
 }
 
 .card-front {
+    /*
     background-image: 
         linear-gradient(
             to bottom right, 
             var(--primary-color), 
             var(--secondary-color)
+        );
+    */
+    background: 
+        linear-gradient(
+            69.9deg, 
+            rgb(76, 79, 106) 3.2%, 
+            rgb(118, 124, 163) 97.6%
         );
     display: flex;
     align-items: center;
@@ -97,11 +106,19 @@ body {
     left: 0;
     right: 0;
     z-index: -1;
+    /*
     background-image: 
         linear-gradient(
             to bottom left, 
             var(--primary-color) 15%, 
             var(--secondary-color) 115%
+        );
+    */
+    background: 
+        linear-gradient(
+            69.9deg, 
+            rgb(76, 79, 106) 3.2%, 
+            rgb(118, 124, 163) 97.6%
         );
     border-radius: 0 0 50% 50%;
 }
