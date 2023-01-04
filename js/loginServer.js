@@ -14,6 +14,17 @@ const server = http.createServer((req, res) => {
                 res.end(data);
             }
         });
+    }else if (req.url == "/forgotPass.html"){
+        res.writeHead(200, {"Content-Type" : "text/html" });
+        fs.readFile("../forgotPass.html", (error, data) => {
+            if (error) {
+                res.writeHead(404);
+                res.write("Error: Page not found");
+            }else {
+                res.end(data);
+            }
+        });
+        console.log(req.url);
     }else if (req.url.match(/.css$/)) {
         const cssPath = path.join(path.resolve(__dirname, "../"), req.url);
         let fileStream = fs.createReadStream(cssPath);
