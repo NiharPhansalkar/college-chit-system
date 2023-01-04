@@ -49,11 +49,6 @@ body {
     background: rgba(255,255,255,0.8);
     border-radius: 50%;
 }
-/*
-.forgot-pswd {
-    display: none;
-}
-*/
 .form::before {
     content: '';
     position: absolute;
@@ -127,39 +122,4 @@ body {
     padding: 10px 20px;
     border-radius: 5px;
     cursor: pointer;
-}
-.forgot-pass {
-    color: inherit;
-    display: block;
-    margin-top: 16px;
-    text-align: center;
-}
-.forgot-pswd {
-    position: absolute;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 1;
-    height: 100%;
-    background: #fff;
-    opacity: 1;
-    transition: 0.6s;
-}
-.close {
-    position: absolute;
-    right: 1.5rem;
-    top: 0.5rem;
-    font-size: 2rem;
-    font-weight: 900;
-    text-decoration: none;
-    color: inherit;
-}
-
-#sign-up {
-    position: absolute;
-    left: 0;
-    top: 69px;
 }

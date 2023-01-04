@@ -26,7 +26,7 @@ const server = http.createServer((req, res) => {
         });
     }else if (req.url == "/index.html"){
         res.writeHead(200, {"Content-Type" : "text/html" });
-        fs.readFile("../forgotPass.html", (error, data) => {
+        fs.readFile("../index.html", (error, data) => {
             if (error) {
                 res.writeHead(404);
                 res.write("Error: Page not found");
@@ -35,6 +35,16 @@ const server = http.createServer((req, res) => {
             }
         });
         console.log(req.url);
+    }else if (req.url == "/signUp.html"){
+        res.writeHead(200, {"Content-Type" : "text/html" });
+        fs.readFile("../signUp.html", (error, data) => {
+            if (error) {
+                res.writeHead(404);
+                res.write("Error: Page not found");
+            }else {
+                res.end(data);
+            }
+        });
     }else if (req.url.match(/.css$/)) {
         const cssPath = path.join(path.resolve(__dirname, "../"), req.url);
         let fileStream = fs.createReadStream(cssPath);
