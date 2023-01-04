@@ -1,10 +1,15 @@
-const inputElements = document.querySelectorAll(".input-group input");
+const inputElements = Array.from(document.querySelectorAll(".input-group input"));
 
-for (inputs of inputElements) {
-    inputs.addEventListener("focus", () => {
-        inputs.nextElementSibling.classList.add("translate-label");
-    });
-    inputs.addEventListener("focusout", () => {
-        inputs.nextElementSibling.classList.remove("translate-label");
+for (let i = 0; i < inputElements.length; i++) {
+    if (inputElements[i].value !== "") {
+        inputElements[i].labels[0].classList.add("translate-label");
+    }else {
+        inputElements[i].labels[0].classList.remove("translate-label");
+    }
+    inputElements[i].addEventListener("focus", () => {
+        inputElements[i].labels[0].classList.add("translate-label");
+    })
+    inputElements[i].addEventListener("focusout", () => {
+        inputElements[i].labels[0].classList.remove("translate-label");
     })
 }
