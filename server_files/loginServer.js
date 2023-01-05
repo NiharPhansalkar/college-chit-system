@@ -25,13 +25,13 @@ const server = http.createServer((req, res) => {
                 res.writeHead(302, {"Location" : "/"})
                 res.end();
             }else if (req.url === "/signup_page/signUp.html") {
-                try {
-                    signUpCheck(userInfo);
+                //try {
+                    //signUpCheck(userInfo);
                     res.writeHead(302, {"Location" : "/"})
                     res.end();
-                } catch (e) {
-                    console.log(e.message);
-                }
+                //} catch (e) {
+                    //console.log(e.message);
+                //}
             }
         });
     }
