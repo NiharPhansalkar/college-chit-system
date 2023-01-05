@@ -1,12 +1,32 @@
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const querystring = require("querystring");
 const port = 3000;
 
 const server = http.createServer((req, res) => {
+    
+    // For form submissions
+    if (req.method.toLowerCase() === "post") {
+        let body = '';
+        req.on("data", (chunk) => {
+            body += chunk.toString();
+        })
+        req.on("end", () => {
+            console.log(querystring.decode(body));
+            if (req.url === "/") {
+                res.writeHead(302, {"Location" : "/experiment_page/index.html"})
+                res.end();
+            }else {
+                res.writeHead(302, {"Location" : "/"})
+                res.end();
+            }
+        });
+    }
+
     if (req.url == "/") {
         res.writeHead(200, { "Content-Type" : "text/html" }); // Gives a response header, which is used to give more detail about the response
-        fs.readFile("../loginPage.html", (error, data) => {
+        fs.readFile("../login_page/loginPage.html", (error, data) => {
             if (error) {
                 res.writeHead(404);
                 res.write("Error: Page not found");
@@ -14,9 +34,9 @@ const server = http.createServer((req, res) => {
                 res.end(data);
             }
         });
-    }else if (req.url == "/forgotPass.html"){
+    }else if (req.url == "/forgot_password/forgotPass.html"){
         res.writeHead(200, {"Content-Type" : "text/html" });
-        fs.readFile("../forgotPass.html", (error, data) => {
+        fs.readFile("../forgot_password/forgotPass.html", (error, data) => {
             if (error) {
                 res.writeHead(404);
                 res.write("Error: Page not found");
@@ -24,9 +44,9 @@ const server = http.createServer((req, res) => {
                 res.end(data);
             }
         });
-    }else if (req.url == "/index.html"){
+    }else if (req.url == "/experiment_page/index.html"){
         res.writeHead(200, {"Content-Type" : "text/html" });
-        fs.readFile("../index.html", (error, data) => {
+        fs.readFile("../experiment_page/index.html", (error, data) => {
             if (error) {
                 res.writeHead(404);
                 res.write("Error: Page not found");
@@ -34,10 +54,9 @@ const server = http.createServer((req, res) => {
                 res.end(data);
             }
         });
-        console.log(req.url);
     }else if (req.url == "/signUp.html"){
         res.writeHead(200, {"Content-Type" : "text/html" });
-        fs.readFile("../signUp.html", (error, data) => {
+        fs.readFile("../signup_page/signUp.html", (error, data) => {
             if (error) {
                 res.writeHead(404);
                 res.write("Error: Page not found");

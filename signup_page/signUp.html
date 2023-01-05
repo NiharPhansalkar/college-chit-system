@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="./css/signUpStyles.css">
-    <script src="./js/signUpPage.js" defer></script>
-    <script src="./js/labelChange.js" defer></script>
+    <link rel="stylesheet" href="/signup_page/css/signUpStyles.css">
+    <script src="/signup_page/js/signUpPage.js" defer></script>
+    <script src="/signup_page/js/labelChange.js" defer></script>
     <title>DigiChit - The Online Chit System | SignUp</title>
 </head>
 <body>
@@ -18,8 +18,8 @@
         </ul>
     </nav>
     <div class="login-info">
-        <form action="" class="form">
-            <img src="./images/avatar.png" id="avatar" alt="avatar">
+        <form method="POST" class="form">
+            <img src="/images/avatar.png" id="avatar" alt="avatar">
             <h2>Sign Up</h2>
             <div class="input-group">
                 <input type="email" name="user-email" id="user-email" required>
@@ -28,6 +28,10 @@
             <div class="input-group">
                 <input type="password" name="user-password" id="user-password" required>
                 <label for="user-password">Password</label>
+            </div>
+            <div class="input-group">
+                <input type="password" name="confirm-user-password" id="confirm-user-password" required>
+                <label for="confirm-user-password">Confirm Password</label>
                 <button type="submit" class="submit-btn" id="sign-up">SignUp</button>
             </div>
         </form>

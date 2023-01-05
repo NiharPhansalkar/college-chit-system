@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="./css/loginStyles.css">
-    <script src="./js/labelChange.js" defer></script>
-    <script src="./js/redirectSignUp.js" defer></script>
+    <link rel="stylesheet" href="/login_page/css/loginStyles.css">
+    <script src="/login_page/js/labelChange.js" defer></script>
+    <script src="/login_page/js/redirectSignUp.js" defer></script>
     <title>DigiChit - The Online Chit System | Login</title>
 </head>
 <body>
@@ -18,8 +18,8 @@
         </ul>
     </nav>
     <div class="login-info">
-        <form action="" class="form">
-            <img src="./images/avatar.png" id="avatar" alt="avatar">
+        <form action="" method="POST" class="form">
+            <img src="/images/avatar.png" id="avatar" alt="avatar">
             <h2>Login</h2>
             <div class="input-group">
                 <input type="email" name="user-email" id="user-email" required>
@@ -30,7 +30,7 @@
                 <label for="user-password">Password</label>
                 <button type="submit" class="submit-btn">Login</button>
                 <button type="submit" class="submit-btn" id="sign-up">SignUp</button>
-                <a href="./forgotPass.html" class="forgot-pass">Forgot Password?</a>
+                <a href="/forgot_password/forgotPass.html" class="forgot-pass">Forgot Password?</a>
             </div>
         </form>
     </div>
