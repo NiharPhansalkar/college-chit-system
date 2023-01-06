@@ -2,10 +2,15 @@ const signUpBtn = document.getElementById("sign-up");
 const email = document.getElementById("user-email");
 const pswd = document.getElementById("user-password");
 const pswdConfirm = document.getElementById("confirm-user-password");
+const emailError = document.getElementById("email-error");
+const pswdError = document.getElementById("password-error");
 
 signUpBtn.addEventListener("click", () => {
     if (!email.value.match(/@sitpune.edu.in$/)) {
-        alert("Invalid email! Please try again with an SIT emailID");
+        emailError.textContent = "Please enter valid SIT email ID";
+        emailError.style.color = "red";
+        emailError.style.display = "inline-block";
+        emailError.style.marginBottom = "26px";
         event.preventDefault(); // Prevents the from being submitted
 
         // You need to set timeout so browser can properly finish all html work (such as submitting the form)
@@ -15,8 +20,12 @@ signUpBtn.addEventListener("click", () => {
             location.reload();
         }, 10)*/
 
-    }else if (pswd.value !== pswdConfirm.value) {
-        alert("Password and confirm password fields do not match");
+    }
+    if (pswd.value !== pswdConfirm.value) {
+        pswdError.textContent = "Entered password does not match";
+        pswdError.style.color = "red";
+        pswdError.style.display = "inline-block";
+        pswdError.style.marginBottom = "26px";
         event.preventDefault();
         
         /*setTimeout(() => {

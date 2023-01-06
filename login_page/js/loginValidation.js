@@ -1,10 +1,13 @@
 const loginBtn = document.getElementById("login-button");
 const email = document.getElementById("user-email"); 
-const pswd = document.getElementById("user-password"); 
+const emailError = document.getElementById("email-error"); 
 
 loginBtn.addEventListener("click", () => {
     if (!email.value.match(/@sitpune.edu.in$/)) {
-        alert("Incorrect email address. Please login using an SIT email ID");
+        emailError.textContent = "Please enter valid SIT email ID";
+        emailError.style.color = "red";
+        emailError.style.display = "inline-block";
+        emailError.style.marginBottom = "13px";
         event.preventDefault();
     } 
 })
