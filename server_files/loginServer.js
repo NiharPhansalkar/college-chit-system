@@ -19,14 +19,17 @@ const server = http.createServer((req, res) => {
             
             // Status code 302 stands for code of redirection
             if (req.url === "/") {
+                console.log(userInfo);
                 res.writeHead(302, {"Location" : "/experiment_page/index.html"})
                 res.end();
             }else if (req.url === "/forgot_password/forgotPass.html"){
+                console.log(userInfo);
                 res.writeHead(302, {"Location" : "/"})
                 res.end();
             }else if (req.url === "/signup_page/signUp.html") {
-                    res.writeHead(302, {"Location" : "/"})
-                    res.end();
+                console.log(userInfo);
+                res.writeHead(302, {"Location" : "/"})
+                res.end();
             }
         });
     }
