@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/forgot_password/css/forgotPassStyles.css">
+    <link rel="stylesheet" href="/otp_page/css/otpStyles.css">
     <script src="/forgot_password/js/labelChange.js" defer></script>
     <script src="/forgot_password/js/emailValidation.js" defer></script>
 </head>
@@ -16,17 +16,17 @@
             <li><a href="#">About</a></li>
         </ul>
     </nav>
-    <div class="login-info">
-        <div class="forgot-pswd">
+    <div class="wrapper">
+        <div class="otp-form">
             <form action="" method="POST" class="form">
                 <a href="/" class="close">&times;</a>
-                <h2>Reset Password</h2>
+                <h2>Enter OTP</h2>
                 <div class="input-group">
-                    <input type="email" name="user-email" id="user-email" required>
-                    <label for="user-email">Email</label>
-                    <span id="email-error"></span>
+                    <input type="number" name="user-otp" id="user-otp" min="100000" max="999999" required>
+                    <label for="user-otp">OTP</label>
+                    <span id="otp-error"></span>
                 </div>
-                <button type="submit" class="submit-btn" id="forgot-button">Send Change Password Link</button>
+                <button type="submit" class="submit-btn" id="otp-send">Confirm OTP</button>
             </form>
         </div>
     </div>

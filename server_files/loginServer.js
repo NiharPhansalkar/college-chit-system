@@ -2,9 +2,13 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const querystring = require("querystring");
+const nodemailer = require("nodemailer");
 const port = 3000;
 
-const server = http.createServer((req, res) => {
+const server = http.createServer({
+        key: fs.readFileSync("../localhost-key.pem"),
+        cert: fs.readFileSync("../localhost.pem"),
+    } ,(req, res) => {
     
     // For form submissions
     if (req.method.toLowerCase() === "post") {
@@ -16,7 +20,7 @@ const server = http.createServer((req, res) => {
         req.on("end", () => {
             // querystring.decode converts browser query string into an object
             const userInfo = querystring.decode(body); // userInfo is an object here
-            
+
             // Status code 302 stands for code of redirection
             if (req.url === "/") {
                 console.log(userInfo);
@@ -27,6 +31,12 @@ const server = http.createServer((req, res) => {
                 res.writeHead(302, {"Location" : "/"})
                 res.end();
             }else if (req.url === "/signup_page/signUp.html") {
+                console.log(userInfo);
+                let userOTP = generateOTP();
+                sendOTP(userInfo, userOTP);
+                res.writeHead(302, {"Location" : "/otp_page/otpPage.html"})
+                res.end();
+            }else if (req.url === "/otp_page/otpPage.html") {
                 console.log(userInfo);
                 res.writeHead(302, {"Location" : "/"})
                 res.end();
@@ -76,6 +86,16 @@ const server = http.createServer((req, res) => {
                 res.end(data);
             }
         });
+    }else if (req.url == "/otp_page/otpPage.html"){
+        res.writeHead(200, {"Content-Type" : "text/html" });
+        fs.readFile("../otp_page/otpPage.html", (error, data) => {
+            if (error) {
+                res.writeHead(404);
+                res.write("Error: Page not found");
+            }else {
+                res.end(data);
+            }
+        });
     }
     // The match function tries to match with provided regexp.
     // Here the regexp is matching with file extensions at the end
@@ -113,11 +133,38 @@ server.listen(port, (error) => {
     }
 })
 
+/* Start of functions utility functions */
+
 function signUpCheck(userObject) {
-    if (userObject["user-password"] !== userObject["confirm-user-password"]) {
-        throw new Error("Password entered does not match with confirm password field");
+    if ("confirm-user-password" in userObject) {
+        if (userObject["user-password"] !== userObject["confirm-user-password"]) {
+            throw new Error("Password entered does not match with confirm password field");
+        }
     }
     if (!userObject["user-email"].match(/@sitpune.edu.in$/)){
         throw new Error("Invalid email, please enter again!");
     }
+}
+
+async function sendOTP(userObject, userOtp) {
+    let transporter = nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        auth: {
+            user: "digichit1@gmail.com",
+            pass: "digichit#123"
+        }
+    });
+
+    let info = await transport.sendMail({
+        from: 'DigiChit <digichit1@gmail.com>',
+        to: `${userObject["user-email"]}`,
+        subject: "Email Confirmation",
+        text: "Hello! Below is the OTP for your email confirmation! Thank you for using DigiChit!",
+        html: `<h2>${userOTP}</h2>`
+    })
+}
+
+function generateOTP() {
+    const min = 1000000;
+    return Math.floor(Math.random() * min);
 }
