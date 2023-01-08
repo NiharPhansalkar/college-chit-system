@@ -1,13 +1,13 @@
-const http = require("http");
+const https = require("https");
 const fs = require("fs");
 const path = require("path");
 const querystring = require("querystring");
 const nodemailer = require("nodemailer");
 const port = 3000;
 
-const server = http.createServer({
-        key: fs.readFileSync("../localhost-key.pem"),
-        cert: fs.readFileSync("../localhost.pem"),
+const server = https.createServer({
+        key: fs.readFileSync(path.join(path.resolve(__dirname, "../"), "/certs/key.pem")),
+        cert: fs.readFileSync(path.join(path.resolve(__dirname, "../"), "/certs/cert.pem")),
     } ,(req, res) => {
     
     // For form submissions
