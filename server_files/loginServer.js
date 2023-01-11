@@ -6,8 +6,8 @@ const nodemailer = require("nodemailer");
 const port = 3000;
 
 const server = https.createServer({
-        key: fs.readFileSync(path.join(path.resolve(__dirname, "../"), "/certs/key.pem")),
-        cert: fs.readFileSync(path.join(path.resolve(__dirname, "../"), "/certs/cert.pem")),
+        key: fs.readFileSync(path.join(path.resolve(__dirname, "../../"), "/certs/ca_pvt_key.pem")),
+        cert: fs.readFileSync(path.join(path.resolve(__dirname, "../../"), "/certs/ca_cert.pem")),
     } ,(req, res) => {
     
     // For form submissions
