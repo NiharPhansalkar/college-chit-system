@@ -5,10 +5,18 @@ const querystring = require("querystring");
 const nodemailer = require("nodemailer");
 const port = 3000;
 
-const server = https.createServer({
-        key: fs.readFileSync(path.join(path.resolve(__dirname, "../../"), "/certs/ca_pvt_key.pem")),
-        cert: fs.readFileSync(path.join(path.resolve(__dirname, "../../"), "/certs/ca_cert.pem")),
-    } ,(req, res) => {
+const options = {
+    host: "localhost",
+    port: port,
+    path: "/",
+    rejectUnauthorized: false,
+    requestCert: true,
+    agent: false,
+    key: fs.readFileSync(path.join(path.resolve(__dirname, "../../"), "/certs/ca_pvt_key.pem")),
+    cert: fs.readFileSync(path.join(path.resolve(__dirname, "../../"), "/certs/ca_cert.pem")),
+};
+
+const server = https.createServer(options, (req, res) => {
     
     // For form submissions
     if (req.method.toLowerCase() === "post") {
