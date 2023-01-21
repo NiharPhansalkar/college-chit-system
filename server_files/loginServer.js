@@ -12,8 +12,8 @@ const options = {
     rejectUnauthorized: false,
     requestCert: true,
     agent: false,
-    key: fs.readFileSync(path.join(path.resolve(__dirname, "../../"), "/certs/server_pvt_key.pem")),
-    cert: fs.readFileSync(path.join(path.resolve(__dirname, "../../"), "/certs/cert_chain.pem")),
+    key: fs.readFileSync(path.join(path.resolve(__dirname, "../../"), "/certs/myLocalhost.key")),
+    cert: fs.readFileSync(path.join(path.resolve(__dirname, "../../"), "/certs/myLocalhost.crt")),
 };
 
 const server = https.createServer(options, (req, res) => {
