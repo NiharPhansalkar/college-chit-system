@@ -1,10 +1,13 @@
-const https = require("https");
-const fs = require("fs");
-const path = require("path");
-const querystring = require("querystring");
-const nodemailer = require("nodemailer");
+const https = require("https"); // For creating HTTPS server
+const fs = require("fs"); // To access the file system through which files will be loaded
+const path = require("path"); // For functions like path.join and path.resolve
+const querystring = require("querystring"); // For converting browser query string into an object
+const nodemailer = require("nodemailer"); // To send emails to the user
+const {Client} = require("pg"); // To connect to the postgres database
+const url = require('url'); // For getting URL parameters
 const port = 3000;
 
+// Options for https server
 const options = {
     host: "localhost",
     port: port,
@@ -14,7 +17,18 @@ const options = {
     agent: false,
     key: fs.readFileSync(path.join(path.resolve(__dirname, "../../"), "/certs/myLocalhost.key")),
     cert: fs.readFileSync(path.join(path.resolve(__dirname, "../../"), "/certs/myLocalhost.crt")),
+    ca: fs.readFileSync(path.join(path.resolve(__dirname, "../../"), "/certs/myCA.pem")),
 };
+
+// Client connection for Postgres
+const client = new Client({
+    database: "information",
+    port: 5432,
+    user: "tigress",
+    ssl: {
+        rejectUnauthorized: false
+    },
+});
 
 const server = https.createServer(options, (req, res) => {
     
@@ -24,7 +38,7 @@ const server = https.createServer(options, (req, res) => {
         req.on("data", (chunk) => {
             body += chunk.toString();
         })
-
+        
         req.on("end", () => {
             // querystring.decode converts browser query string into an object
             const userInfo = querystring.decode(body); // userInfo is an object here
@@ -40,14 +54,36 @@ const server = https.createServer(options, (req, res) => {
                 res.end();
             }else if (req.url === "/signup_page/signUp.html") {
                 console.log(userInfo);
+
+                // Generate OTP
                 let userOTP = generateOTP();
+                // Mail the OTP to the user
                 sendOTP(userInfo, userOTP);
-                res.writeHead(302, {"Location" : "/otp_page/otpPage.html"})
+                
+                client.connect();
+                /*
+                await client.query(`INSERT INTO faculty_information(email, password)
+                VALUES ()`, (err, res) => {
+                    if (err) throw err;
+                    console.log(res.rows);
+                });
+                */
+
+                res.writeHead(302, {"Location" : `/otp_page/otpPage.html?otp=${userOTP}&flag=1`})
                 res.end();
-            }else if (req.url === "/otp_page/otpPage.html") {
+            }else if (req.url.startsWith("/otp_page/otpPage.html")) {
                 console.log(userInfo);
-                res.writeHead(302, {"Location" : "/"})
-                res.end();
+
+                const parsedURL = url.parse(req.url, true); // parse the URL and include the query string
+                const query = parsedURL.query; // Get the query string object
+
+                if (userInfo["user-otp"] == query.otp) {
+                    res.writeHead(302, {"Location" : "/"})
+                    res.end();
+                } else {
+                    res.writeHead(302, {"Location" : `/otp_page/otpPage.html?otp=${query.otp}&flag=-1`})
+                    res.end();
+                }
             }
         });
     }
@@ -94,7 +130,7 @@ const server = https.createServer(options, (req, res) => {
                 res.end(data);
             }
         });
-    }else if (req.url == "/otp_page/otpPage.html"){
+    }else if (req.url.startsWith("/otp_page/otpPage.html")){
         res.writeHead(200, {"Content-Type" : "text/html" });
         fs.readFile("../otp_page/otpPage.html", (error, data) => {
             if (error) {
@@ -154,21 +190,26 @@ function signUpCheck(userObject) {
     }
 }
 
-async function sendOTP(userObject, userOtp) {
+async function sendOTP(userObject, userOTP) {
     let transporter = nodemailer.createTransport({
         host: "smtp.gmail.com",
+        secure: false,
         auth: {
             user: "digichit1@gmail.com",
-            pass: "digichit#123"
-        }
+            pass: "hdgqqmmxnnibyavd",
+            // pass: "digichit#123"
+        },
+        tls: {
+            rejectUnauthorized: false
+        },
     });
 
-    let info = await transport.sendMail({
+    let info = await transporter.sendMail({
         from: 'DigiChit <digichit1@gmail.com>',
         to: `${userObject["user-email"]}`,
         subject: "Email Confirmation",
-        text: "Hello! Below is the OTP for your email confirmation! Thank you for using DigiChit!",
-        html: `<h2>${userOTP}</h2>`
+        html: `<p>Hello! Below is the OTP for your email confirmation! Thank you for using DigiChit!</p>
+            <h2>${userOTP}</h2>`
     })
 }
 
