@@ -59,15 +59,6 @@ const server = https.createServer(options, (req, res) => {
                 let userOTP = generateOTP();
                 // Mail the OTP to the user
                 sendOTP(userInfo, userOTP);
-                
-                client.connect();
-                /*
-                await client.query(`INSERT INTO faculty_information(email, password)
-                VALUES ()`, (err, res) => {
-                    if (err) throw err;
-                    console.log(res.rows);
-                });
-                */
 
                 res.writeHead(302, {"Location" : `/otp_page/otpPage.html?otp=${userOTP}&flag=1`})
                 res.end();
@@ -76,6 +67,14 @@ const server = https.createServer(options, (req, res) => {
 
                 const parsedURL = url.parse(req.url, true); // parse the URL and include the query string
                 const query = parsedURL.query; // Get the query string object
+
+                //client.connect();
+                //
+                //client.query(`INSERT INTO faculty_information(email, password)
+                //VALUES (${userInfo["user-email"]}, ${userInfo["user-password"]})`, (err, res) => {
+                //    if (err) throw err;
+                //    console.log(res.rows);
+                //});
 
                 if (userInfo["user-otp"] == query.otp) {
                     res.writeHead(302, {"Location" : "/"})
@@ -196,7 +195,7 @@ async function sendOTP(userObject, userOTP) {
         secure: false,
         auth: {
             user: "digichit1@gmail.com",
-            pass: "hdgqqmmxnnibyavd",
+            pass: "hktwdrixjmvudcos",
             // pass: "digichit#123"
         },
         tls: {
