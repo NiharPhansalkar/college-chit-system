@@ -3,7 +3,7 @@ const fs = require("fs"); // To access the file system through which files will 
 const path = require("path"); // For functions like path.join and path.resolve
 const querystring = require("querystring"); // For converting browser query string into an object
 const nodemailer = require("nodemailer"); // To send emails to the user
-const {Client} = require("pg"); // To connect to the postgres database
+const { Client } = require("pg"); // To connect to the postgres database
 const url = require('url'); // For getting URL parameters
 const port = 3000;
 
@@ -26,7 +26,10 @@ const client = new Client({
     port: 5432,
     user: "tigress",
     ssl: {
-        rejectUnauthorized: false
+        rejectUnauthorized: false,
+        key: fs.readFileSync(path.join(path.resolve(__dirname, "../../"), "/certs/myLocalhost.key")).toString(),
+        cert: fs.readFileSync(path.join(path.resolve(__dirname, "../../"), "/certs/myLocalhost.crt")).toString(),
+        ca: fs.readFileSync(path.join(path.resolve(__dirname, "../../"), "/certs/myCA.pem")).toString(),
     },
 });
 
@@ -46,8 +49,39 @@ const server = https.createServer(options, (req, res) => {
             // Status code 302 stands for code of redirection
             if (req.url === "/") {
                 console.log(userInfo);
-                res.writeHead(302, {"Location" : "/experiment_page/index.html"})
-                res.end();
+                client.connect();
+                
+                let userPass = "";
+
+                let dbQuery = `
+                SELECT password FROM faculty_information
+                WHERE email='${userInfo["user-email"]}';
+                `;
+
+                client.query(dbQuery, (err, res) => {
+                    if (err) throw err;
+
+                    if (res.rows.length != 0) {
+                        userPass += res.rows[0].password;
+                    }
+                    client.end();
+                })
+
+                console.log(userPass);
+
+                if (userPass === "") {
+                    res.writeHead(302, {"Location" : "/"})
+                    res.end();
+                }
+                if (userInfo["user-password"] === userPass) {
+                    console.log("Pass is " + userPass);
+                    console.log("What I have is " + userInfo["user-password"]);
+                    res.writeHead(302, {"Location" : "/experiment_page/index.html"})
+                    res.end();
+                } else {
+                    res.writeHead(302, {"Location" : "/"})
+                    res.end();
+                }
             }else if (req.url === "/forgot_password/forgotPass.html"){
                 console.log(userInfo);
                 res.writeHead(302, {"Location" : "/"})
@@ -59,6 +93,24 @@ const server = https.createServer(options, (req, res) => {
                 let userOTP = generateOTP();
                 // Mail the OTP to the user
                 sendOTP(userInfo, userOTP);
+                
+                client.connect();
+
+                // Creating query to insert email, password, etc into the database
+                let dbQuery = `
+                INSERT INTO faculty_information(email, password, otp, time)
+                VALUES (
+                    '${userInfo["user-email"]}', 
+                    '${userInfo["user-password"]}', 
+                    ${userOTP}, 
+                    NOW()
+                );`;
+
+                client.query(dbQuery, (err, res) => {
+                    if (err) throw err;
+                    console.log(res);
+                    client.end();
+                });
 
                 res.writeHead(302, {"Location" : `/otp_page/otpPage.html?otp=${userOTP}&flag=1`})
                 res.end();
@@ -67,14 +119,6 @@ const server = https.createServer(options, (req, res) => {
 
                 const parsedURL = url.parse(req.url, true); // parse the URL and include the query string
                 const query = parsedURL.query; // Get the query string object
-
-                //client.connect();
-                //
-                //client.query(`INSERT INTO faculty_information(email, password)
-                //VALUES (${userInfo["user-email"]}, ${userInfo["user-password"]})`, (err, res) => {
-                //    if (err) throw err;
-                //    console.log(res.rows);
-                //});
 
                 if (userInfo["user-otp"] == query.otp) {
                     res.writeHead(302, {"Location" : "/"})
@@ -89,7 +133,7 @@ const server = https.createServer(options, (req, res) => {
 
     // Following is how the server decides which file to load
     // All paths are relative to root of the project
-    if (req.url == "/") {
+    if (req.url === "/") {
         res.writeHead(200, { "Content-Type" : "text/html" }); // Gives a response header, which is used to give more detail about the response
         fs.readFile("../login_page/loginPage.html", (error, data) => {
             if (error) {
@@ -195,7 +239,7 @@ async function sendOTP(userObject, userOTP) {
         secure: false,
         auth: {
             user: "digichit1@gmail.com",
-            pass: "hktwdrixjmvudcos",
+            pass: "xxmmbxssrhusjens",
             // pass: "digichit#123"
         },
         tls: {

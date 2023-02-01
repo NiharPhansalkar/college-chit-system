@@ -1,7 +1,9 @@
 create table faculty_information (
     faculty_id serial primary key,
     email varchar (255) unique not null,
-    password varchar (50) not null
+    password varchar (50) not null,
+    otp int, 
+    time timestamp without time zone 
 );
 create table subjects (
     subject_id serial primary key,
