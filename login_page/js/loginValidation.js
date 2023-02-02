@@ -11,3 +11,14 @@ loginBtn.addEventListener("click", () => {
         event.preventDefault();
     } 
 })
+
+fetch('/', { ... })
+  .then(response => response.json())
+  .then(data => {
+    if (data.error) {
+      // display the error message on the browser
+      console.log(data.error);
+    } else {
+      // do nothing
+    }
+  });
