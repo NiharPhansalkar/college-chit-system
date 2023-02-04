@@ -18,7 +18,6 @@
   "homepage": "https://github.com/NiharPhansalkar/college-chit-system#readme",
   "dependencies": {
     "nodemailer": "^6.8.0",
-    "pg": "^8.8.0",
-    "pg-promise": "^11.2.0"
+    "pg": "^8.8.0"
   }
 }

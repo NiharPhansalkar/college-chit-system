@@ -1,6 +1,7 @@
 const loginBtn = document.getElementById("login-button");
 const email = document.getElementById("user-email"); 
 const emailError = document.getElementById("email-error"); 
+const generalError = document.getElementById("general-error");
 
 loginBtn.addEventListener("click", () => {
     if (!email.value.match(/@sitpune.edu.in$/)) {
@@ -12,13 +13,3 @@ loginBtn.addEventListener("click", () => {
     } 
 })
 
-fetch('/', { ... })
-  .then(response => response.json())
-  .then(data => {
-    if (data.error) {
-      // display the error message on the browser
-      console.log(data.error);
-    } else {
-      // do nothing
-    }
-  });

@@ -4,7 +4,6 @@ const path = require("path"); // For functions like path.join and path.resolve
 const querystring = require("querystring"); // For converting browser query string into an object
 const nodemailer = require("nodemailer"); // To send emails to the user
 const { Client } = require("pg"); // To connect to the postgres database
-const pgp = require("pg-promise");
 const url = require('url'); // For getting URL parameters
 const port = 3000;
 
@@ -42,22 +41,21 @@ const server = https.createServer(options, (req, res) => {
                 const client = createClient();
                 client.connect();
                 
-                let userPass = "";
-
+                // Below is the query to get user password
                 let dbQuery = `
                 SELECT password FROM faculty_information
                 WHERE email='${userInfo["user-email"]}';
                 `;
 
-                client.query(dbQuery, (err, res) => {
+                client.query(dbQuery, (err, dbres) => {
                     if (err) throw err;
-                    console.log(res);
-                    if (res.rows.length !== 0) {
-                        if (res.rows[0].password === "") {
+                    console.log(dbres);
+                    if (dbres.rows.length !== 0) {
+                        if (dbres.rows[0].password === "") {
                             res.writeHead(302, {"Location" : "/"})
                             res.end();
                         }
-                        if (userInfo["user-password"] === res.rows[0].password) {
+                        if (userInfo["user-password"] === dbres.rows[0].password) {
                             res.writeHead(302, {"Location" : "/experiment_page/index.html"})
                             res.end();
                         } else {
