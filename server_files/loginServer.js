@@ -36,7 +36,7 @@ const server = https.createServer(options, (req, res) => {
             const userInfo = querystring.decode(body); // userInfo is an object here
 
             // Status code 302 stands for code of redirection
-            if (req.url === "/") {
+            if (req.url.startsWith("/login_page/loginPage.html")) {
                 console.log(userInfo);
                 const client = createClient();
                 client.connect();
@@ -49,22 +49,29 @@ const server = https.createServer(options, (req, res) => {
 
                 client.query(dbQuery, (err, dbres) => {
                     if (err) throw err;
-                    console.log(dbres);
+                    console.log(dbres.rows.length);
                     if (dbres.rows.length !== 0) {
                         if (dbres.rows[0].password === "") {
-                            res.writeHead(302, {"Location" : "/"})
+                            let error = "Please register yourself correctly";
+                            res.writeHead(302, {"Location" : `/login_page/loginPage.html?error=${encodeURIComponent(error)}`})
                             res.end();
                         }
                         if (userInfo["user-password"] === dbres.rows[0].password) {
                             res.writeHead(302, {"Location" : "/experiment_page/index.html"})
                             res.end();
                         } else {
-                            res.writeHead(302, {"Location" : "/"})
+                            let error = "Incorrect password or username";
+                            res.writeHead(302, {"Location" : `/login_page/loginPage.html?error=${encodeURIComponent(error)}`})
                             res.end();
+                            //res.writeHead(302, {"Location" : "/"})
+                            //res.end();
                         }
                     } else {
-                        res.writeHead(302, {"Location" : "/"})
+                        let error = "Please sign up";
+                        res.writeHead(302, {"Location" : `/login_page/loginPage.html?error=${encodeURIComponent(error)}`})
                         res.end();
+                        //res.writeHead(302, {"Location" : "/"})
+                        //res.end();
                     }
                     client.end();
                 })
@@ -121,6 +128,18 @@ const server = https.createServer(options, (req, res) => {
     // Following is how the server decides which file to load
     // All paths are relative to root of the project
     if (req.url === "/") {
+        res.writeHead(302, {"Location" : "/login_page/loginPage.html"});
+        res.end();
+         //res.writeHead(200, { "Content-Type" : "text/html" }); // Gives a response header, which is used to give more detail about the response
+         //fs.readFile("../login_page/loginPage.html", (error, data) => {
+         //    if (error) {
+         //        res.writeHead(404);
+         //        res.write("Error: Page not found");
+         //    }else {
+         //        res.end(data);
+         //    }
+         //});
+    }else if (req.url.startsWith("/login_page/loginPage.html")){
         res.writeHead(200, { "Content-Type" : "text/html" }); // Gives a response header, which is used to give more detail about the response
         fs.readFile("../login_page/loginPage.html", (error, data) => {
             if (error) {
@@ -130,7 +149,7 @@ const server = https.createServer(options, (req, res) => {
                 res.end(data);
             }
         });
-    }else if (req.url == "/forgot_password/forgotPass.html"){
+    }else if (req.url === "/forgot_password/forgotPass.html"){
         res.writeHead(200, {"Content-Type" : "text/html" });
         fs.readFile("../forgot_password/forgotPass.html", (error, data) => {
             if (error) {
@@ -140,7 +159,7 @@ const server = https.createServer(options, (req, res) => {
                 res.end(data);
             }
         });
-    }else if (req.url == "/experiment_page/index.html"){
+    }else if (req.url === "/experiment_page/index.html"){
         res.writeHead(200, {"Content-Type" : "text/html" });
         fs.readFile("../experiment_page/index.html", (error, data) => {
             if (error) {
@@ -150,7 +169,7 @@ const server = https.createServer(options, (req, res) => {
                 res.end(data);
             }
         });
-    }else if (req.url == "/signup_page/signUp.html"){
+    }else if (req.url === "/signup_page/signUp.html"){
         res.writeHead(200, {"Content-Type" : "text/html" });
         fs.readFile("../signup_page/signUp.html", (error, data) => {
             if (error) {
