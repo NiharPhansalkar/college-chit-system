@@ -37,7 +37,6 @@ const server = https.createServer(options, (req, res) => {
 
             // Status code 302 stands for code of redirection
             if (req.url.startsWith("/login_page/loginPage.html")) {
-                console.log(userInfo);
                 const client = createClient();
                 client.connect();
                 
@@ -49,7 +48,6 @@ const server = https.createServer(options, (req, res) => {
 
                 client.query(dbQuery, (err, dbres) => {
                     if (err) throw err;
-                    console.log(dbres.rows.length);
                     if (dbres.rows.length !== 0) {
                         if (dbres.rows[0].password === "") {
                             let error = "Please register yourself correctly";
@@ -68,8 +66,10 @@ const server = https.createServer(options, (req, res) => {
                         }
                     } else {
                         let error = "Please sign up";
-                        res.writeHead(302, {"Location" : `/login_page/loginPage.html?error=${encodeURIComponent(error)}`})
+                        res.writeHead(302, {"Location" : "/experiment_page/index.html"})
+                        //res.writeHead(302, {"Location" : `/login_page/loginPage.html?error=${encodeURIComponent(error)}`})
                         res.end();
+                        console.log("after redirection");
                         //res.writeHead(302, {"Location" : "/"})
                         //res.end();
                     }
@@ -77,7 +77,7 @@ const server = https.createServer(options, (req, res) => {
                 })
             }else if (req.url === "/forgot_password/forgotPass.html"){
                 console.log(userInfo);
-                res.writeHead(302, {"Location" : "/"})
+                res.writeHead(302, {"Location" : "/login_page/loginPage.html"})
                 res.end();
             }else if (req.url === "/signup_page/signUp.html") {
                 console.log(userInfo);

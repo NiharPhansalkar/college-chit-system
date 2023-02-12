@@ -16,10 +16,12 @@ loginBtn.addEventListener("click", () => {
 })
 
 window.addEventListener("load", () => {
-    if(paramString.includes("error")) {
-        generalError.textContent = paramString.get("error");
-        generalError.style.color = "red";
-        generalError.style.display = "inline-block";
-        generalError.style.marginBottom = "13px";
+    if(paramString !== undefined) {
+        if (paramString.includes("error")){
+            generalError.textContent = paramString.get("error");
+            generalError.style.color = "red";
+            generalError.style.display = "inline-block";
+            generalError.style.marginBottom = "13px";
+        }
     }
 })
