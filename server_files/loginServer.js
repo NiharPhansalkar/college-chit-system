@@ -6,6 +6,7 @@ const nodemailer = require("nodemailer"); // To send emails to the user
 const { Client } = require("pg"); // To connect to the postgres database
 const url = require('url'); // For getting URL parameters
 const port = 3000;
+const debug = require('debug')('app:server');
 
 // Options for https server
 const options = {
@@ -46,35 +47,36 @@ const server = https.createServer(options, (req, res) => {
                 WHERE email='${userInfo["user-email"]}';
                 `;
 
-                client.query(dbQuery, (err, dbres) => {
-                    if (err) throw err;
-                    if (dbres.rows.length !== 0) {
-                        if (dbres.rows[0].password === "") {
-                            let error = "Please register yourself correctly";
-                            res.writeHead(302, {"Location" : `/login_page/loginPage.html?error=${encodeURIComponent(error)}`})
-                            res.end();
-                        }
-                        if (userInfo["user-password"] === dbres.rows[0].password) {
-                            res.writeHead(302, {"Location" : "/experiment_page/index.html"})
-                            res.end();
+                const queryPromise = new Promise((resolve, reject) => {
+                    client.query(dbQuery, (err, dbres) => {
+                        if (err) reject(err);
+                        if (dbres.rows.length !== 0) {
+                            if (dbres.rows[0].password === "") {
+                                reject("Please register yourself correctly");
+                            }
+                            if (userInfo["user-password"] === dbres.rows[0].password) {
+                                resolve("");
+                            } else {
+                                reject("Incorrect password or username");
+                            }
                         } else {
-                            let error = "Incorrect password or username";
-                            res.writeHead(302, {"Location" : `/login_page/loginPage.html?error=${encodeURIComponent(error)}`})
-                            res.end();
-                            //res.writeHead(302, {"Location" : "/"})
-                            //res.end();
+                            reject("Please sign up");
                         }
-                    } else {
-                        let error = "Please sign up";
+                        client.end();
+                    });
+                });
+
+                queryPromise
+                    .then(() => {
                         res.writeHead(302, {"Location" : "/experiment_page/index.html"})
-                        //res.writeHead(302, {"Location" : `/login_page/loginPage.html?error=${encodeURIComponent(error)}`})
                         res.end();
-                        console.log("after redirection");
-                        //res.writeHead(302, {"Location" : "/"})
-                        //res.end();
-                    }
-                    client.end();
-                })
+                    })
+                    .catch((error) => {
+                        console.log(error);
+                        res.writeHead(302, {"Location" : `/login_page/loginPage.html?error=${encodeURIComponent(error)}`})
+                        res.end();
+                    })
+
             }else if (req.url === "/forgot_password/forgotPass.html"){
                 console.log(userInfo);
                 res.writeHead(302, {"Location" : "/login_page/loginPage.html"})
