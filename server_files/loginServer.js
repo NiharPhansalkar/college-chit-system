@@ -23,7 +23,7 @@ const options = {
 
 // Client connection for Postgres
 
-const server = https.createServer(options, (req, res) => {
+const server = https.createServer(options, async (req, res) => {
     
     // For form submissions
     if (req.method.toLowerCase() === "post") {
@@ -66,16 +66,33 @@ const server = https.createServer(options, (req, res) => {
                     });
                 });
 
+                let errVal = "";
+
                 queryPromise
                     .then(() => {
-                        res.writeHead(302, {"Location" : "/experiment_page/index.html"})
-                        res.end();
+                        errVal = "";
                     })
                     .catch((error) => {
-                        console.log(error);
-                        res.writeHead(302, {"Location" : `/login_page/loginPage.html?error=${encodeURIComponent(error)}`})
-                        res.end();
+                        errVal = error;
+                        console.log(errVal);
                     })
+                    .finally(() => {
+                        console.log("Finally");
+                        redirectUser(errVal);
+                    })
+
+                function redirectUser(err) {
+                    // Below redirection works
+                    console.log("In function");
+                    if (err) {
+                        res.writeHead(302, {"Location" : `/login_page/loginPage.html?error=${encodeURIComponent(err)}`});
+                        res.end();
+                    } else {
+                        res.writeHead(302, {"Location" : "/experiment_page/index.html"});
+                        res.end();
+                    }
+                    console.log("Exiting function");
+                }
 
             }else if (req.url === "/forgot_password/forgotPass.html"){
                 console.log(userInfo);
