@@ -47,52 +47,81 @@ const server = https.createServer(options, async (req, res) => {
                 WHERE email='${userInfo["user-email"]}';
                 `;
 
-                const queryPromise = new Promise((resolve, reject) => {
-                    client.query(dbQuery, (err, dbres) => {
-                        if (err) reject(err);
-                        if (dbres.rows.length !== 0) {
-                            if (dbres.rows[0].password === "") {
-                                reject("Please register yourself correctly");
-                            }
-                            if (userInfo["user-password"] === dbres.rows[0].password) {
-                                resolve("");
-                            } else {
-                                reject("Incorrect password or username");
-                            }
-                        } else {
-                            reject("Please sign up");
-                        }
-                        client.end();
-                    });
-                });
-
                 let errVal = "";
 
-                queryPromise
-                    .then(() => {
-                        errVal = "";
-                    })
-                    .catch((error) => {
-                        errVal = error;
-                        console.log(errVal);
-                    })
-                    .finally(() => {
-                        console.log("Finally");
-                        redirectUser(errVal);
-                    })
+                //client.query(dbQuery, (err, dbres) => {
+                //    if (err) throw(err);
+                //    if (dbres.rows.length !== 0) {
+                //        if (dbres.rows[0].password === "") {
+                //            errVal = "Please register yourself correctly";
+                //            res.writeHead(302, {"Location" : `/login_page/loginPage.html?error=${encodeURIComponent(errVal)}`});
+                //            res.end();
+                //            client.end();
+                //            return;
+                //        }
+                //        if (userInfo["user-password"] === dbres.rows[0].password) {
+                //            res.writeHead(302, {"Location" : "/experiment_page/index.html"});
+                //            res.end();
+                //            client.end();
+                //            return;
+                //        } else {
+                //            errVal = "Incorrect password or email address";
+                //            res.writeHead(302, {"Location" : `/login_page/loginPage.html?error=${encodeURIComponent(errVal)}`});
+                //            res.end();
+                //            client.end();
+                //            return;
+                //        }
+                //    } else {
+                //        errVal = "Please sign up";
+                //        res.setHeader("Location", `/login_page/loginPage.html?error=${encodeURIComponent(errVal)}`);
+                //        res.statusCode = 302;
+                //        //res.writeHead(302, {"Location" : `/login_page/loginPage.html?error=${encodeURIComponent(errVal)}`});
+                //        res.end();
+                //        client.end();
+                //        return;
+                //    }
+                //});
+                
+                async function handleLoginReq(req, res) {
+                    let queryDB = `
+                    SELECT password FROM faculty_information
+                    WHERE email='${userInfo["user-email"]}';
+                    `;
 
-                function redirectUser(err) {
-                    // Below redirection works
-                    console.log("In function");
-                    if (err) {
-                        res.writeHead(302, {"Location" : `/login_page/loginPage.html?error=${encodeURIComponent(err)}`});
-                        res.end();
-                    } else {
-                        res.writeHead(302, {"Location" : "/experiment_page/index.html"});
-                        res.end();
+                    try {
+                        const dbres = await client.query(queryDB);
+                        if (dbres.rows.length !== 0) {
+                            if (dbres.rows[0].password === '') {
+                                const errVal = 'Please register yourself correctly';
+                                res.writeHead(302, { 'Location': `/login_page/loginPage.html?error=${encodeURIComponent(errVal)}` });
+                                res.end();
+                            console.log("random shizz 1");
+                            } else if (userPassword === dbres.rows[0].password) {
+                                res.writeHead(302, { 'Location': '/experiment_page/index.html' });
+                                res.end();
+                            console.log("random shizz 2");
+                            } else {
+                                const errVal = 'Incorrect password or email address';
+                                res.writeHead(302, { 'Location': `/login_page/loginPage.html?error=${encodeURIComponent(errVal)}` });
+                                res.end();
+                            console.log("random shizz 3");
+                            }
+                        } else {
+                              const errVal = 'Please sign up';
+                              res.writeHead(302, { 'Location': `/login_page/loginPage.html?error=${encodeURIComponent(errVal)}` });
+                              res.end();
+                            console.log("Inside the error I am supposed to be in");
+                        } 
+                        
+                    } catch (err) {
+                        res.writeHead(500);
+                        res.end("Internal server error");
                     }
-                    console.log("Exiting function");
                 }
+
+                console.log("Hi!");
+                handleLoginReq(req, res);
+                console.log("Bye!");
 
             }else if (req.url === "/forgot_password/forgotPass.html"){
                 console.log(userInfo);
