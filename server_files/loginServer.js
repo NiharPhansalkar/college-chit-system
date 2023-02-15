@@ -87,7 +87,6 @@ const server = https.createServer(options, async (req, res) => {
                     SELECT password FROM faculty_information
                     WHERE email='${userInfo["user-email"]}';
                     `;
-
                     try {
                         const dbres = await client.query(queryDB);
                         if (dbres.rows.length !== 0) {
@@ -95,27 +94,28 @@ const server = https.createServer(options, async (req, res) => {
                                 const errVal = 'Please register yourself correctly';
                                 res.writeHead(302, { 'Location': `/login_page/loginPage.html?error=${encodeURIComponent(errVal)}` });
                                 res.end();
-                            console.log("random shizz 1");
-                            } else if (userPassword === dbres.rows[0].password) {
+                                client.end();
+                            } else if (userInfo["user-password"] === dbres.rows[0].password) {
                                 res.writeHead(302, { 'Location': '/experiment_page/index.html' });
                                 res.end();
-                            console.log("random shizz 2");
+                                client.end();
                             } else {
                                 const errVal = 'Incorrect password or email address';
                                 res.writeHead(302, { 'Location': `/login_page/loginPage.html?error=${encodeURIComponent(errVal)}` });
                                 res.end();
-                            console.log("random shizz 3");
+                                client.end();
                             }
                         } else {
                               const errVal = 'Please sign up';
                               res.writeHead(302, { 'Location': `/login_page/loginPage.html?error=${encodeURIComponent(errVal)}` });
                               res.end();
-                            console.log("Inside the error I am supposed to be in");
+                            client.end();
                         } 
                         
                     } catch (err) {
                         res.writeHead(500);
                         res.end("Internal server error");
+                        client.end();
                     }
                 }
 
