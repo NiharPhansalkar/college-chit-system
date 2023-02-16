@@ -21,9 +21,7 @@ const options = {
     ca: fs.readFileSync(path.join(path.resolve(__dirname, "../../"), "/certs/myCA.pem")),
 };
 
-// Client connection for Postgres
-
-const server = https.createServer(options, async (req, res) => {
+const server = https.createServer(options, async function (req, res) {
     
     // For form submissions
     if (req.method.toLowerCase() === "post") {
@@ -32,63 +30,25 @@ const server = https.createServer(options, async (req, res) => {
             body += chunk.toString();
         })
         
-        req.on("end", () => {
+        req.on("end", async function () {
             // querystring.decode converts browser query string into an object
             const userInfo = querystring.decode(body); // userInfo is an object here
 
             // Status code 302 stands for code of redirection
             if (req.url.startsWith("/login_page/loginPage.html")) {
                 const client = createClient();
-                client.connect();
-                
-                // Below is the query to get user password
-                let dbQuery = `
-                SELECT password FROM faculty_information
-                WHERE email='${userInfo["user-email"]}';
-                `;
+                await client.connect();
 
                 let errVal = "";
 
-                //client.query(dbQuery, (err, dbres) => {
-                //    if (err) throw(err);
-                //    if (dbres.rows.length !== 0) {
-                //        if (dbres.rows[0].password === "") {
-                //            errVal = "Please register yourself correctly";
-                //            res.writeHead(302, {"Location" : `/login_page/loginPage.html?error=${encodeURIComponent(errVal)}`});
-                //            res.end();
-                //            client.end();
-                //            return;
-                //        }
-                //        if (userInfo["user-password"] === dbres.rows[0].password) {
-                //            res.writeHead(302, {"Location" : "/experiment_page/index.html"});
-                //            res.end();
-                //            client.end();
-                //            return;
-                //        } else {
-                //            errVal = "Incorrect password or email address";
-                //            res.writeHead(302, {"Location" : `/login_page/loginPage.html?error=${encodeURIComponent(errVal)}`});
-                //            res.end();
-                //            client.end();
-                //            return;
-                //        }
-                //    } else {
-                //        errVal = "Please sign up";
-                //        res.setHeader("Location", `/login_page/loginPage.html?error=${encodeURIComponent(errVal)}`);
-                //        res.statusCode = 302;
-                //        //res.writeHead(302, {"Location" : `/login_page/loginPage.html?error=${encodeURIComponent(errVal)}`});
-                //        res.end();
-                //        client.end();
-                //        return;
-                //    }
-                //});
-                
                 async function handleLoginReq(req, res) {
-                    let queryDB = `
+                    // Below is the query to get user password
+                    let dbQuery = `
                     SELECT password FROM faculty_information
                     WHERE email='${userInfo["user-email"]}';
                     `;
                     try {
-                        const dbres = await client.query(queryDB);
+                        const dbres = await client.query(dbQuery);
                         if (dbres.rows.length !== 0) {
                             if (dbres.rows[0].password === '') {
                                 const errVal = 'Please register yourself correctly';
@@ -106,9 +66,10 @@ const server = https.createServer(options, async (req, res) => {
                                 client.end();
                             }
                         } else {
-                              const errVal = 'Please sign up';
-                              res.writeHead(302, { 'Location': `/login_page/loginPage.html?error=${encodeURIComponent(errVal)}` });
-                              res.end();
+                            const errVal = 'Please sign up';
+                            console.log(errVal);
+                            res.writeHead(302, { 'Location': `/login_page/loginPage.html?error=${encodeURIComponent(errVal)}` });
+                            res.end();
                             client.end();
                         } 
                         
@@ -120,7 +81,7 @@ const server = https.createServer(options, async (req, res) => {
                 }
 
                 console.log("Hi!");
-                handleLoginReq(req, res);
+                await handleLoginReq(req, res);
                 console.log("Bye!");
 
             }else if (req.url === "/forgot_password/forgotPass.html"){
