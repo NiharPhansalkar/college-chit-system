@@ -1,12 +1,15 @@
+#!/usr/bin/env node
+
 const https = require("https"); // For creating HTTPS server
 const fs = require("fs"); // To access the file system through which files will be loaded
 const path = require("path"); // For functions like path.join and path.resolve
 const querystring = require("querystring"); // For converting browser query string into an object
 const nodemailer = require("nodemailer"); // To send emails to the user
 const { Client } = require("pg"); // To connect to the postgres database
-const url = require('url'); // For getting URL parameters
+const url = require("url"); // For getting URL parameters
+const debug = require("debug")("app:server");
+
 const port = 3000;
-const debug = require('debug')('app:server');
 
 // Options for https server
 const options = {
@@ -16,79 +19,92 @@ const options = {
     rejectUnauthorized: false,
     requestCert: true,
     agent: false,
-    key: fs.readFileSync(path.join(path.resolve(__dirname, "../../"), "/certs/myLocalhost.key")),
-    cert: fs.readFileSync(path.join(path.resolve(__dirname, "../../"), "/certs/myLocalhost.crt")),
-    ca: fs.readFileSync(path.join(path.resolve(__dirname, "../../"), "/certs/myCA.pem")),
+    key: fs.readFileSync(
+        path.join(path.resolve(__dirname, "../../"), "/certs/myLocalhost.key")
+    ),
+    cert: fs.readFileSync(
+        path.join(path.resolve(__dirname, "../../"), "/certs/myLocalhost.crt")
+    ),
+    ca: fs.readFileSync(
+        path.join(path.resolve(__dirname, "../../"), "/certs/myCA.pem")
+    ),
 };
 
-const server = https.createServer(options, async function (req, res) {
-    
+const server = https.createServer(options, function (req, res) {
     // For form submissions
     if (req.method.toLowerCase() === "post") {
-        let body = '';
-        req.on("data", (chunk) => {
-            body += chunk.toString();
-        })
-        
-        req.on("end", async function () {
+        let body_arr = [];
+        req.on("data", chunk => {
+            body_arr.push(chunk);
+        }).on("end", async function () {
+            body = Buffer.concat(body_arr).toString();
             // querystring.decode converts browser query string into an object
             const userInfo = querystring.decode(body); // userInfo is an object here
 
-            // Status code 302 stands for code of redirection
             if (req.url.startsWith("/login_page/loginPage.html")) {
                 const client = createClient();
                 await client.connect();
 
-                let errVal = "";
-
-                async function handleLoginReq(req, res) {
-                    // Below is the query to get user password
-                    let dbQuery = `
-                    SELECT password FROM faculty_information
-                    WHERE email='${userInfo["user-email"]}';
+                console.log("Hi!");
+                // Below is the query to get user password
+                let dbQuery = `
+                        SELECT password FROM faculty_information
+                        WHERE email='${userInfo["user-email"]}';
                     `;
-                    try {
-                        const dbres = await client.query(dbQuery);
-                        if (dbres.rows.length !== 0) {
-                            if (dbres.rows[0].password === '') {
-                                const errVal = 'Please register yourself correctly';
-                                res.writeHead(302, { 'Location': `/login_page/loginPage.html?error=${encodeURIComponent(errVal)}` });
-                                res.end();
-                                client.end();
-                            } else if (userInfo["user-password"] === dbres.rows[0].password) {
-                                res.writeHead(302, { 'Location': '/experiment_page/index.html' });
-                                res.end();
-                                client.end();
-                            } else {
-                                const errVal = 'Incorrect password or email address';
-                                res.writeHead(302, { 'Location': `/login_page/loginPage.html?error=${encodeURIComponent(errVal)}` });
-                                res.end();
-                                client.end();
-                            }
-                        } else {
-                            const errVal = 'Please sign up';
-                            console.log(errVal);
-                            res.writeHead(302, { 'Location': `/login_page/loginPage.html?error=${encodeURIComponent(errVal)}` });
+                try {
+                    const dbres = await client.query(dbQuery);
+                    if (dbres.rows.length !== 0) {
+                        if (dbres.rows[0].password === "") {
+                            const errVal = "Please register yourself correctly";
+                            // Status code 302 stands for code of redirection
+                            res.writeHead(302, {
+                                Location: `/login_page/loginPage.html?error=${encodeURIComponent(
+                                    errVal
+                                )}`,
+                            });
                             res.end();
                             client.end();
-                        } 
-                        
-                    } catch (err) {
-                        res.writeHead(500);
-                        res.end("Internal server error");
+                        } else if (
+                            userInfo["user-password"] === dbres.rows[0].password
+                        ) {
+                            res.writeHead(302, {
+                                Location: "/experiment_page/index.html",
+                            });
+                            res.end();
+                            client.end();
+                        } else {
+                            const errVal =
+                                "Incorrect password or email address";
+                            res.writeHead(302, {
+                                Location: `/login_page/loginPage.html?error=${encodeURIComponent(
+                                    errVal
+                                )}`,
+                            });
+                            res.end();
+                            client.end();
+                        }
+                    } else {
+                        const errVal = "Please sign up";
+                        console.log(errVal);
+                        res.writeHead(302, {
+                            Location: `/login_page/loginPage.html?error=${encodeURIComponent(
+                                errVal
+                            )}`,
+                        });
+                        res.end();
                         client.end();
                     }
+                } catch (err) {
+                    res.writeHead(500);
+                    res.end("Internal server error");
+                    client.end();
                 }
-
-                console.log("Hi!");
-                await handleLoginReq(req, res);
                 console.log("Bye!");
-
-            }else if (req.url === "/forgot_password/forgotPass.html"){
+            } else if (req.url === "/forgot_password/forgotPass.html") {
                 console.log(userInfo);
-                res.writeHead(302, {"Location" : "/login_page/loginPage.html"})
+                res.writeHead(302, { Location: "/login_page/loginPage.html" });
                 res.end();
-            }else if (req.url === "/signup_page/signUp.html") {
+            } else if (req.url === "/signup_page/signUp.html") {
                 console.log(userInfo);
 
                 // Generate OTP
@@ -115,19 +131,23 @@ const server = https.createServer(options, async function (req, res) {
                     client.end();
                 });
 
-                res.writeHead(302, {"Location" : `/otp_page/otpPage.html?otp=${userOTP}&flag=1`})
+                res.writeHead(302, {
+                    Location: `/otp_page/otpPage.html?otp=${userOTP}&flag=1`,
+                });
                 res.end();
-            }else if (req.url.startsWith("/otp_page/otpPage.html")) {
+            } else if (req.url.startsWith("/otp_page/otpPage.html")) {
                 console.log(userInfo);
 
                 const parsedURL = url.parse(req.url, true); // parse the URL and include the query string
                 const query = parsedURL.query; // Get the query string object
 
                 if (userInfo["user-otp"] == query.otp) {
-                    res.writeHead(302, {"Location" : "/"})
+                    res.writeHead(302, { Location: "/" });
                     res.end();
                 } else {
-                    res.writeHead(302, {"Location" : `/otp_page/otpPage.html?otp=${query.otp}&flag=-1`})
+                    res.writeHead(302, {
+                        Location: `/otp_page/otpPage.html?otp=${query.otp}&flag=-1`,
+                    });
                     res.end();
                 }
             }
@@ -137,64 +157,64 @@ const server = https.createServer(options, async function (req, res) {
     // Following is how the server decides which file to load
     // All paths are relative to root of the project
     if (req.url === "/") {
-        res.writeHead(302, {"Location" : "/login_page/loginPage.html"});
+        res.writeHead(302, { Location: "/login_page/loginPage.html" });
         res.end();
-         //res.writeHead(200, { "Content-Type" : "text/html" }); // Gives a response header, which is used to give more detail about the response
-         //fs.readFile("../login_page/loginPage.html", (error, data) => {
-         //    if (error) {
-         //        res.writeHead(404);
-         //        res.write("Error: Page not found");
-         //    }else {
-         //        res.end(data);
-         //    }
-         //});
-    }else if (req.url.startsWith("/login_page/loginPage.html")){
-        res.writeHead(200, { "Content-Type" : "text/html" }); // Gives a response header, which is used to give more detail about the response
+        //res.writeHead(200, { "Content-Type" : "text/html" }); // Gives a response header, which is used to give more detail about the response
+        //fs.readFile("../login_page/loginPage.html", (error, data) => {
+        //    if (error) {
+        //        res.writeHead(404);
+        //        res.write("Error: Page not found");
+        //    }else {
+        //        res.end(data);
+        //    }
+        //});
+    } else if (req.url.startsWith("/login_page/loginPage.html")) {
+        res.writeHead(200, { "Content-Type": "text/html" }); // Gives a response header, which is used to give more detail about the response
         fs.readFile("../login_page/loginPage.html", (error, data) => {
             if (error) {
                 res.writeHead(404);
                 res.write("Error: Page not found");
-            }else {
+            } else {
                 res.end(data);
             }
         });
-    }else if (req.url === "/forgot_password/forgotPass.html"){
-        res.writeHead(200, {"Content-Type" : "text/html" });
+    } else if (req.url === "/forgot_password/forgotPass.html") {
+        res.writeHead(200, { "Content-Type": "text/html" });
         fs.readFile("../forgot_password/forgotPass.html", (error, data) => {
             if (error) {
                 res.writeHead(404);
                 res.write("Error: Page not found");
-            }else {
+            } else {
                 res.end(data);
             }
         });
-    }else if (req.url === "/experiment_page/index.html"){
-        res.writeHead(200, {"Content-Type" : "text/html" });
+    } else if (req.url === "/experiment_page/index.html") {
+        res.writeHead(200, { "Content-Type": "text/html" });
         fs.readFile("../experiment_page/index.html", (error, data) => {
             if (error) {
                 res.writeHead(404);
                 res.write("Error: Page not found");
-            }else {
+            } else {
                 res.end(data);
             }
         });
-    }else if (req.url === "/signup_page/signUp.html"){
-        res.writeHead(200, {"Content-Type" : "text/html" });
+    } else if (req.url === "/signup_page/signUp.html") {
+        res.writeHead(200, { "Content-Type": "text/html" });
         fs.readFile("../signup_page/signUp.html", (error, data) => {
             if (error) {
                 res.writeHead(404);
                 res.write("Error: Page not found");
-            }else {
+            } else {
                 res.end(data);
             }
         });
-    }else if (req.url.startsWith("/otp_page/otpPage.html")){
-        res.writeHead(200, {"Content-Type" : "text/html" });
+    } else if (req.url.startsWith("/otp_page/otpPage.html")) {
+        res.writeHead(200, { "Content-Type": "text/html" });
         fs.readFile("../otp_page/otpPage.html", (error, data) => {
             if (error) {
                 res.writeHead(404);
                 res.write("Error: Page not found");
-            }else {
+            } else {
                 res.end(data);
             }
         });
@@ -207,43 +227,47 @@ const server = https.createServer(options, async function (req, res) {
         // https://www.youtube.com/watch?v=LaNuN3FkcM8 - Difference between join and resolve
         const cssPath = path.join(path.resolve(__dirname, "../"), req.url);
         let fileStream = fs.createReadStream(cssPath); // Create a readstream to read file
-        res.writeHead(200, {"Content-Type" : "text/css"});
+        res.writeHead(200, { "Content-Type": "text/css" });
         fileStream.pipe(res); // pipe helps us directly write without needing a write stream
-    }else if (req.url.match(/.js$/)) {
+    } else if (req.url.match(/.js$/)) {
         const jsPath = path.join(path.resolve(__dirname, "../"), req.url);
         let fileStream = fs.createReadStream(jsPath);
-        res.writeHead(200, {"Content-Type" : "text/javascript"});
+        res.writeHead(200, { "Content-Type": "text/javascript" });
         fileStream.pipe(res);
-    }else if (req.url.match(/.png$/)) {
+    } else if (req.url.match(/.png$/)) {
         const imgPath = path.join(path.resolve(__dirname, "../"), req.url);
         let fileStream = fs.createReadStream(imgPath);
-        res.writeHead(200, {"Content-Type" : "image/png"});
+        res.writeHead(200, { "Content-Type": "image/png" });
         fileStream.pipe(res);
-    }else if (req.url.match(/.jpg$/)) {
+    } else if (req.url.match(/.jpg$/)) {
         const imgPath = path.join(path.resolve(__dirname, "../"), req.url);
         let fileStream = fs.createReadStream(imgPath);
-        res.writeHead(200, {"Content-Type" : "image/jpg"});
+        res.writeHead(200, { "Content-Type": "image/jpg" });
         fileStream.pipe(res);
     }
 });
 
-server.listen(port, (error) => {
+server.listen(port, error => {
     if (error) {
         console.log("Something went wrong");
     } else {
         console.log("Server listening on port " + port);
     }
-})
+});
 
 /* Start of functions utility functions */
 
 function signUpCheck(userObject) {
     if ("confirm-user-password" in userObject) {
-        if (userObject["user-password"] !== userObject["confirm-user-password"]) {
-            throw new Error("Password entered does not match with confirm password field");
+        if (
+            userObject["user-password"] !== userObject["confirm-user-password"]
+        ) {
+            throw new Error(
+                "Password entered does not match with confirm password field"
+            );
         }
     }
-    if (!userObject["user-email"].match(/@sitpune.edu.in$/)){
+    if (!userObject["user-email"].match(/@sitpune.edu.in$/)) {
         throw new Error("Invalid email, please enter again!");
     }
 }
@@ -258,17 +282,17 @@ async function sendOTP(userObject, userOTP) {
             // pass: "digichit#123"
         },
         tls: {
-            rejectUnauthorized: false
+            rejectUnauthorized: false,
         },
     });
 
     let info = await transporter.sendMail({
-        from: 'DigiChit <digichit1@gmail.com>',
+        from: "DigiChit <digichit1@gmail.com>",
         to: `${userObject["user-email"]}`,
         subject: "Email Confirmation",
         html: `<p>Hello! Below is the OTP for your email confirmation! Thank you for using DigiChit!</p>
-            <h2>${userOTP}</h2>`
-    })
+            <h2>${userOTP}</h2>`,
+    });
 }
 
 function generateOTP() {
@@ -283,9 +307,30 @@ function createClient() {
         user: "tigress",
         ssl: {
             rejectUnauthorized: false,
-            key: fs.readFileSync(path.join(path.resolve(__dirname, "../../"), "/certs/myLocalhost.key")).toString(),
-            cert: fs.readFileSync(path.join(path.resolve(__dirname, "../../"), "/certs/myLocalhost.crt")).toString(),
-            ca: fs.readFileSync(path.join(path.resolve(__dirname, "../../"), "/certs/myCA.pem")).toString(),
+            key: fs
+                .readFileSync(
+                    path.join(
+                        path.resolve(__dirname, "../../"),
+                        "/certs/myLocalhost.key"
+                    )
+                )
+                .toString(),
+            cert: fs
+                .readFileSync(
+                    path.join(
+                        path.resolve(__dirname, "../../"),
+                        "/certs/myLocalhost.crt"
+                    )
+                )
+                .toString(),
+            ca: fs
+                .readFileSync(
+                    path.join(
+                        path.resolve(__dirname, "../../"),
+                        "/certs/myCA.pem"
+                    )
+                )
+                .toString(),
         },
     });
 }
