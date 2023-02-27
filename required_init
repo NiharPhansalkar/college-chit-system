@@ -1,0 +1,91 @@
+#! /usr/bin/bash
+
+# Before running this script, please download postgresql-server based on your distro.
+
+cd ..
+
+# After running the script, make sure to copy the ca_cert.crt file into your OS trust store and then run update-ca-certificates
+# Since this requires root access, the script does not do it for you.
+
+# Checking for installation of openssl
+
+if ! [ -x "$(command -v openssl)" ]; then
+    apt install libssl-dev
+    apt install openssl
+fi
+
+# Storing our keys and certificate in a folder called certs
+
+DIR_NAME=$(echo "$PWD" | rev | cut -d / -f 1 | rev)
+if ! [ "$DIR_NAME" = "certs" ]; then
+    if ! [ -d "certs" ]; then
+        mkdir certs
+        cd certs || exit
+    else 
+        cd certs
+    fi
+fi
+
+# Generating our private keys
+
+openssl ecparam -name prime256v1 -genkey -noout -outform PEM -out myCA.key
+
+# Generating our certificate
+
+openssl req -x509 -new -nodes -key myCA.key -sha256 -days 3600 -out myCA.pem
+
+# Creating SCR (Server Certificate Request)
+
+read -p "Enter name for your server file: " NAME
+openssl ecparam -name prime256v1 -genkey -noout -outform PEM -out $NAME.key
+openssl req -new -key $NAME.key -out $NAME.csr
+
+# Creating a ext file
+
+cat << EOF >> $NAME.ext
+authorityKeyIdentifier=keyid,issuer
+basicConstraints=CA:FALSE
+keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
+subjectAltName = @alt_names
+[alt_names]
+DNS.1 = localhost # Be sure to include the domain name here because Common Name is not so commonly honoured by itself
+IP.1 = 127.0.0.1 # Optionally, add an IP address (if the connection which you have planned requires it)
+EOF
+
+# Generating our final signed certificate
+openssl x509 -req -in $NAME.csr -CA myCA.pem -CAkey myCA.key -CAcreateserial -out $NAME.crt -days 3600 -sha256 -extfile $NAME.ext
+
+
+# Creating required DB connections
+
+cd ..
+
+REQ_DIR="db"
+create_dir=""
+
+if [ -d "$REQ_DIR" ]; then
+    create_dir+="db2"
+else
+    create_dir+="db"
+fi
+
+mkdir "$create_dir" && cd "$create_dir"
+initdb -D .
+sed -i -e "$ a hostssl all             all             127.0.0.1/32            scram-sha-256" pg_hba.conf
+read -rp "Enter your port for the database(for default, enter 5432) " db_port
+
+sed -i "64s/^#//; 64s/5432/$db_port/" postgresql.conf
+sed -i "105s/^#//; 105s/off/on/" postgresql.conf
+sed -i "106s/^#//; 106s/''/'..\/certs\/myCA.pem'/" postgresql.conf
+sed -i "107s/^#//; 107s/'server.crt'/'..\/certs\/$NAME.crt'/" postgresql.conf
+sed -i "110s/^#//; 110s/'server.key'/'..\/certs\/$NAME.key'/" postgresql.conf
+
+pg_ctl -D . -l logfile start
+
+read -rp "Enter the name of the database (for current implementation, please enter 'information') " db_name
+read -rp "Enter the name of the user (for current implementation, please enter 'tigress') " db_user
+
+createdb -U "$db_user" -p "$db_port" "$db_name"  
+psql -d "$db_name" -U "$db_user" -p "$db_port" -f "../college-chit-system/sql/exptDatabase.sql"
+
+cd ..; cd college-chit-system
