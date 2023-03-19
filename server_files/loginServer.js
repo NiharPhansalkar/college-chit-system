@@ -5,7 +5,7 @@ const fs = require("fs"); // To access the file system through which files will 
 const path = require("path"); // For functions like path.join and path.resolve
 const querystring = require("querystring"); // For converting browser query string into an object
 const nodemailer = require("nodemailer"); // To send emails to the user
-const { Client } = require("pg"); // To connect to the postgres database
+const { Pool } = require("pg"); // To connect to the postgres database
 const url = require("url"); // For getting URL parameters
 const debug = require("debug")("app:server");
 
@@ -42,64 +42,47 @@ const server = https.createServer(options, function (req, res) {
             const userInfo = querystring.decode(body); // userInfo is an object here
 
             if (req.url.startsWith("/login_page/loginPage.html")) {
-                const client = createClient();
-                await client.connect();
+                const pool = createPool();
 
-                console.log("Hi!");
                 // Below is the query to get user password
                 let dbQuery = `
                         SELECT password FROM faculty_information
                         WHERE email='${userInfo["user-email"]}';
                     `;
-                try {
-                    const dbres = await client.query(dbQuery);
-                    if (dbres.rows.length !== 0) {
+                pool.query(dbQuery, (err, dbres) => {
+                    if (err) {
+                        console.log(err);
+                    }
+                    console.log('Query executed:', dbres);
+                    if (dbres && dbres.rows.length !== 0) {
                         if (dbres.rows[0].password === "") {
-                            const errVal = "Please register yourself correctly";
-                            // Status code 302 stands for code of redirection
+                            // Empty password not possible
                             res.writeHead(302, {
-                                Location: `/login_page/loginPage.html?error=${encodeURIComponent(
-                                    errVal
-                                )}`,
+                                Location: `/login_page/loginPage.html?error=-1`,
                             });
                             res.end();
-                            client.end();
-                        } else if (
-                            userInfo["user-password"] === dbres.rows[0].password
-                        ) {
+                        } else if (userInfo["user-password"] === dbres.rows[0].password) {
+                            // Correct password
                             res.writeHead(302, {
                                 Location: "/experiment_page/index.html",
                             });
                             res.end();
-                            client.end();
                         } else {
-                            const errVal =
-                                "Incorrect password or email address";
+                            // Incorrect password
                             res.writeHead(302, {
-                                Location: `/login_page/loginPage.html?error=${encodeURIComponent(
-                                    errVal
-                                )}`,
+                                Location: `/login_page/loginPage.html?error=-2`,
                             });
                             res.end();
-                            client.end();
                         }
                     } else {
-                        const errVal = "Please sign up";
-                        console.log(errVal);
+                        // Not signed up
                         res.writeHead(302, {
-                            Location: `/login_page/loginPage.html?error=${encodeURIComponent(
-                                errVal
-                            )}`,
+                            Location: `/login_page/loginPage.html?error=-3`,
                         });
                         res.end();
-                        client.end();
                     }
-                } catch (err) {
-                    res.writeHead(500);
-                    res.end("Internal server error");
-                    client.end();
-                }
-                console.log("Bye!");
+                    pool.end();
+                });
             } else if (req.url === "/forgot_password/forgotPass.html") {
                 console.log(userInfo);
                 res.writeHead(302, { Location: "/login_page/loginPage.html" });
@@ -300,8 +283,8 @@ function generateOTP() {
     return Math.floor(Math.random() * min);
 }
 
-function createClient() {
-    return new Client({
+function createPool() {
+    return new Pool({
         database: "information",
         port: 5432,
         user: "tigress",
