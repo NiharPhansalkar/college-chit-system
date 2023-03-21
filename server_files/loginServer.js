@@ -42,8 +42,11 @@ const server = https.createServer(options, function (req, res) {
             const userInfo = querystring.decode(body); // userInfo is an object here
 
             if (req.url.startsWith("/login_page/loginPage.html")) {
+                const userInfo = JSON.parse(body);
                 const pool = createPool();
 
+                console.log(userInfo["user-password"]);
+                
                 // Below is the query to get user password
                 let dbQuery = `
                         SELECT password FROM faculty_information
@@ -57,28 +60,47 @@ const server = https.createServer(options, function (req, res) {
                     if (dbres && dbres.rows.length !== 0) {
                         if (dbres.rows[0].password === "") {
                             // Empty password not possible
-                            res.writeHead(302, {
-                                Location: `/login_page/loginPage.html?error=-1`,
-                            });
+                            
+                            //res.writeHead(302, {
+                            //    Location: `/login_page/loginPage.html?error=-1`,
+                            //});
+                            
+                            res.writeHead(200, { "Content-Type" : "application/json" });
+                            res.write(JSON.stringify({ success: false, errCode: -1 }));
                             res.end();
                         } else if (userInfo["user-password"] === dbres.rows[0].password) {
                             // Correct password
-                            res.writeHead(302, {
-                                Location: "/experiment_page/index.html",
-                            });
+
+                            //res.writeHead(302, {
+                            //    Location: "/experiment_page/index.html",
+                            //});
+
+                            res.writeHead(200, { "Content-Type" : "application/json" });
+                            res.write(JSON.stringify({ success: true, errCode: null }));
                             res.end();
                         } else {
                             // Incorrect password
-                            res.writeHead(302, {
-                                Location: `/login_page/loginPage.html?error=-2`,
-                            });
+                            
+                            //res.writeHead(302, {
+                            //    Location: `/login_page/loginPage.html?error=-2`,
+                            //});
+
+                            res.writeHead(200, { "Content-Type" : "application/json" });
+                            res.write(JSON.stringify({ success: false, errCode: -2 }));
                             res.end();
                         }
                     } else {
                         // Not signed up
-                        res.writeHead(302, {
-                            Location: `/login_page/loginPage.html?error=-3`,
-                        });
+
+                        //res.writeHead(302, {
+                        //    Location: `/login_page/loginPage.html?error=-3`,
+                        //});
+
+                        res.writeHead(200, {
+                            "Accept": "application/json",
+                            "Content-Type" : "application/json",
+                        })
+                        res.write(JSON.stringify({ success: false, errCode: -3 }))
                         res.end();
                     }
                     pool.end();
