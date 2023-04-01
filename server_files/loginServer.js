@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const https = require("https"); // For creating HTTPS server
+const http = require("http"); // For creating HTTPS server
 const fs = require("fs"); // To access the file system through which files will be loaded
 const path = require("path"); // For functions like path.join and path.resolve
 const querystring = require("querystring"); // For converting browser query string into an object
@@ -11,26 +12,7 @@ const debug = require("debug")("app:server");
 
 const port = 3000;
 
-// Options for https server
-const options = {
-    host: "localhost",
-    port: port,
-    path: "/",
-    rejectUnauthorized: false,
-    requestCert: true,
-    agent: false,
-    key: fs.readFileSync(
-        path.join(path.resolve(__dirname, "../../"), "/certs/myLocalhost.key")
-    ),
-    cert: fs.readFileSync(
-        path.join(path.resolve(__dirname, "../../"), "/certs/myLocalhost.crt")
-    ),
-    ca: fs.readFileSync(
-        path.join(path.resolve(__dirname, "../../"), "/certs/myCA.pem")
-    ),
-};
-
-const server = https.createServer(options, function (req, res) {
+const server = http.createServer(function (req, res) {
     // For form submissions
     if (req.method.toLowerCase() === "post") {
         let body_arr = [];
@@ -58,19 +40,11 @@ const server = https.createServer(options, function (req, res) {
                         if (dbres.rows[0].password === "") {
                             // Empty password not possible
                             
-                            //res.writeHead(302, {
-                            //    Location: `/login_page/loginPage.html?error=-1`,
-                            //});
-                            
                             res.writeHead(200, { "Content-Type" : "application/json" });
                             res.write(JSON.stringify({ success: false, errCode: -1 }));
                             res.end();
                         } else if (userInfo["user-password"] === dbres.rows[0].password) {
                             // Correct password
-
-                            //res.writeHead(302, {
-                            //    Location: "/experiment_page/index.html",
-                            //});
 
                             res.writeHead(200, { "Content-Type" : "application/json" });
                             res.write(JSON.stringify({ success: true, errCode: null }));
@@ -78,20 +52,12 @@ const server = https.createServer(options, function (req, res) {
                         } else {
                             // Incorrect password
                             
-                            //res.writeHead(302, {
-                            //    Location: `/login_page/loginPage.html?error=-2`,
-                            //});
-
                             res.writeHead(200, { "Content-Type" : "application/json" });
                             res.write(JSON.stringify({ success: false, errCode: -2 }));
                             res.end();
                         }
                     } else {
                         // Not signed up
-
-                        //res.writeHead(302, {
-                        //    Location: `/login_page/loginPage.html?error=-3`,
-                        //});
 
                         res.writeHead(200, {
                             "Accept": "application/json",
@@ -105,59 +71,6 @@ const server = https.createServer(options, function (req, res) {
                 } finally {
                     pool.end();
                 }
-                //pool.query(dbQuery, (err, dbres) => {
-                //    if (err) {
-                //        console.log(err);
-                //    }
-                //    console.log('Query executed:', dbres);
-                //    if (dbres && dbres.rows.length !== 0) {
-                //        if (dbres.rows[0].password === "") {
-                //            // Empty password not possible
-                //            
-                //            //res.writeHead(302, {
-                //            //    Location: `/login_page/loginPage.html?error=-1`,
-                //            //});
-                //            
-                //            res.writeHead(200, { "Content-Type" : "application/json" });
-                //            res.write(JSON.stringify({ success: false, errCode: -1 }));
-                //            res.end();
-                //        } else if (userInfo["user-password"] === dbres.rows[0].password) {
-                //            // Correct password
-
-                //            //res.writeHead(302, {
-                //            //    Location: "/experiment_page/index.html",
-                //            //});
-
-                //            res.writeHead(200, { "Content-Type" : "application/json" });
-                //            res.write(JSON.stringify({ success: true, errCode: null }));
-                //            res.end();
-                //        } else {
-                //            // Incorrect password
-                //            
-                //            //res.writeHead(302, {
-                //            //    Location: `/login_page/loginPage.html?error=-2`,
-                //            //});
-
-                //            res.writeHead(200, { "Content-Type" : "application/json" });
-                //            res.write(JSON.stringify({ success: false, errCode: -2 }));
-                //            res.end();
-                //        }
-                //    } else {
-                //        // Not signed up
-
-                //        //res.writeHead(302, {
-                //        //    Location: `/login_page/loginPage.html?error=-3`,
-                //        //});
-
-                //        res.writeHead(200, {
-                //            "Accept": "application/json",
-                //            "Content-Type" : "application/json",
-                //        })
-                //        res.write(JSON.stringify({ success: false, errCode: -3 }))
-                //        res.end();
-                //    }
-                //    pool.end();
-                //});
             } else if (req.url === "/forgot_password/forgotPass.html") {
                 console.log(userInfo);
                 res.writeHead(302, { Location: "/login_page/loginPage.html" });
@@ -170,8 +83,7 @@ const server = https.createServer(options, function (req, res) {
                 // Mail the OTP to the user
                 sendOTP(userInfo, userOTP);
 
-                const client = createClient();
-                client.connect();
+                const pool = createPool();
 
                 // Creating query to insert email, password, etc into the database
                 let dbQuery = `
@@ -183,10 +95,10 @@ const server = https.createServer(options, function (req, res) {
                     NOW()
                 );`;
 
-                client.query(dbQuery, (err, res) => {
+                pool.query(dbQuery, (err, res) => {
                     if (err) throw err;
                     console.log(res);
-                    client.end();
+                    pool.end();
                 });
 
                 res.writeHead(302, {
@@ -217,15 +129,6 @@ const server = https.createServer(options, function (req, res) {
     if (req.url === "/") {
         res.writeHead(302, { Location: "/login_page/loginPage.html" });
         res.end();
-        //res.writeHead(200, { "Content-Type" : "text/html" }); // Gives a response header, which is used to give more detail about the response
-        //fs.readFile("../login_page/loginPage.html", (error, data) => {
-        //    if (error) {
-        //        res.writeHead(404);
-        //        res.write("Error: Page not found");
-        //    }else {
-        //        res.end(data);
-        //    }
-        //});
     } else if (req.url.startsWith("/login_page/loginPage.html")) {
         res.writeHead(200, { "Content-Type": "text/html" }); // Gives a response header, which is used to give more detail about the response
         fs.readFile("../login_page/loginPage.html", (error, data) => {
@@ -336,11 +239,7 @@ async function sendOTP(userObject, userOTP) {
         secure: false,
         auth: {
             user: "digichit1@gmail.com",
-            pass: "xxmmbxssrhusjens",
-            // pass: "digichit#123"
-        },
-        tls: {
-            rejectUnauthorized: false,
+            pass: "",
         },
     });
 
@@ -362,33 +261,9 @@ function createPool() {
     return new Pool({
         database: "information",
         port: 5432,
-        user: "tigress",
-        ssl: {
-            rejectUnauthorized: false,
-            key: fs
-                .readFileSync(
-                    path.join(
-                        path.resolve(__dirname, "../../"),
-                        "/certs/myLocalhost.key"
-                    )
-                )
-                .toString(),
-            cert: fs
-                .readFileSync(
-                    path.join(
-                        path.resolve(__dirname, "../../"),
-                        "/certs/myLocalhost.crt"
-                    )
-                )
-                .toString(),
-            ca: fs
-                .readFileSync(
-                    path.join(
-                        path.resolve(__dirname, "../../"),
-                        "/certs/myCA.pem"
-                    )
-                )
-                .toString(),
-        },
+        user: "postgres",
+        password: "postgres",
+        ssl: false,
+        sslmode: 'disable',
     });
 }
