@@ -13,21 +13,23 @@ loginBtn.addEventListener("click", () => {
         emailError.style.display = "inline-block";
         emailError.style.marginBottom = "13px";
         event.preventDefault();
-    } else {
-        event.preventDefault();
-        fetch("/login_page/loginPage.html", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                "user-email": email.value,
-                "user-password": pswd.value,
-            }),
-        })
-        .then(response => response.json())
-        .then(data => console.log(data))
-        .catch(err => console.log(err))
     } 
 })
-
+window.addEventListener("load", () => {
+    if(paramString.includes("error=-1")) {
+        generalError.textContent = "Password cannot be empty";
+        generalError.style.color = "red";
+        generalError.style.display = "inline-block";
+        generalError.style.marginTop = "13px";
+    } else if (paramString.includes("error=-2")) {
+        generalError.textContent = "Incorrect password";
+        generalError.style.color = "red";
+        generalError.style.display = "inline-block";
+        generalError.style.marginTop = "13px";
+    } else if (paramString.includes("error=-3")) {
+        generalError.textContent = "Please sign up";
+        generalError.style.color = "red";
+        generalError.style.display = "inline-block";
+        generalError.style.marginTop = "13px";
+    }
+});

@@ -1,5 +1,7 @@
 const https = require("https");
 const express = require("express");
+const session = require('express-session');
+const bodyParser = require('body-parser');
 const fs = require("fs"); // To access the file system through which files will be loaded
 const path = require("path"); // For functions like path.join and path.resolve
 const nodemailer = require("nodemailer"); // To send emails to the user
@@ -61,9 +63,15 @@ app.get('/otp_page/otpPage.html', (req, res) => {
     * Starting post request handling
 */
 
+app.use(bodyParser.urlencoded({ extended: true })); // Parse incoming request bodies in a middleware before your handlers, available under the req.body property
 // Parse URL-encoded bodies (as sent by HTML forms)
-app.use(express.urlencoded());
 app.use(express.json());
+
+app.use(session({
+    secret: "otp-secret",
+    resave: false,
+    saveUninitialized: true
+}));
 
 app.post('/forgot_password/forgotPass.html', (req, res) => {
     res.redirect('/login_page/loginPage.html');
@@ -74,25 +82,76 @@ app.post('/signup_page/signUp.html', async(req, res) => {
         // Generate OTP
         let userOTP = generateOTP();
         // Mail the OTP to the user
-        sendOTP(userInfo, userOTP);
+        sendOTP(req.body["user-email"], userOTP);
 
         // Creating query to insert email, password, etc into the database
         let dbQuery = `
-        INSERT INTO faculty_information(email, password, otp, time)
+        INSERT INTO faculty_information(email, password)
         VALUES (
-            '${userInfo["user-email"]}', 
-            '${userInfo["user-password"]}', 
-            ${userOTP}, 
-            NOW()
+            '${req.body["user-email"]}', 
+            '${req.body["user-password"]}'
         );`;
 
         const pool = createPool();
 
         const dbres = await pool.query(dbQuery)
 
-        res.redirect('/login_page/loginPage.html');
-    } catch () {
+        req.session.userOTP = userOTP;
 
+        res.redirect('/otp_page/otpPage.html');
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+app.post('/forgot_password/forgotPass.html', (req, res) => {
+    res.redirect('/');    
+});
+
+app.post('/otp_page/otpPage.html', (req, res) => {
+    const userOTP = req.session.userOTP;
+
+    if (req.body['user-otp'] == userOTP) {
+        delete req.session.userOTP;
+        res.redirect('/');
+    } else {
+        res.redirect('/otp_page/otpPage.html?flag=-1');
+    }
+});
+
+app.post('/login_page/loginPage.html', async(req, res) => {
+    const pool = createPool();
+
+    // Below is the query to get user password
+    let dbQuery = `
+        SELECT password FROM faculty_information
+        WHERE email='${req.body["user-email"]}';
+    `;
+
+    try {
+        const dbres = await pool.query(dbQuery);
+
+        if (dbres.rows.length !== 0) {
+            if (dbres.rows[0].password === "") {
+                // Empty password not possible
+
+                res.redirect('/login_page/loginPage.html?error=-1');
+            } else if (req.body['user-password'] === dbres.rows[0].password) {
+                // Correct password
+
+                res.redirect('/experiment_page/index.html');
+            } else {
+                // Incorrect password
+                
+                res.redirect('/login_page/loginPage.html?error=-2');
+            }
+        } else {
+            // Not signed up
+
+            res.redirect('/login_page/loginPage.html/error=-3');
+        }
+    } catch (err) {
+        console.log(err);
     }
 });
 
@@ -116,13 +175,13 @@ function signUpCheck(userObject) {
     }
 }
 
-async function sendOTP(userObject, userOTP) {
+async function sendOTP(userMail, userOTP) {
     let transporter = nodemailer.createTransport({
         host: "smtp.gmail.com",
         secure: false,
         auth: {
             user: "digichit1@gmail.com",
-            pass: "xxmmbxssrhusjens",
+            pass: "iaixrqyjqxrzdyyr",
             // pass: "digichit#123"
         },
         tls: {
@@ -132,7 +191,7 @@ async function sendOTP(userObject, userOTP) {
 
     let info = await transporter.sendMail({
         from: "DigiChit <digichit1@gmail.com>",
-        to: `${userObject["user-email"]}`,
+        to: `${userMail}`,
         subject: "Email Confirmation",
         html: `<p>Hello! Below is the OTP for your email confirmation! Thank you for using DigiChit!</p>
             <h2>${userOTP}</h2>`,
