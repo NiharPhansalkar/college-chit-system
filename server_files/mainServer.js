@@ -1,7 +1,8 @@
 const https = require("https");
 const express = require("express");
-const session = require('express-session');
-const bodyParser = require('body-parser');
+const session = require('express-session'); // To save items to a session
+const bodyParser = require('body-parser'); // To parse form data
+const bcrypt = require('bcrypt'); // To hash passwords
 const fs = require("fs"); // To access the file system through which files will be loaded
 const path = require("path"); // For functions like path.join and path.resolve
 const nodemailer = require("nodemailer"); // To send emails to the user
@@ -83,13 +84,16 @@ app.post('/signup_page/signUp.html', async(req, res) => {
         let userOTP = generateOTP();
         // Mail the OTP to the user
         sendOTP(req.body["user-email"], userOTP);
+        
+        // Hash the password
+        const hashPass = await bcrypt.hash(req.body['user-password'], 10);
 
         // Creating query to insert email, password, etc into the database
         let dbQuery = `
         INSERT INTO faculty_information(email, password)
         VALUES (
             '${req.body["user-email"]}', 
-            '${req.body["user-password"]}'
+            '${hashPass}'
         );`;
 
         const pool = createPool();
@@ -132,23 +136,18 @@ app.post('/login_page/loginPage.html', async(req, res) => {
         const dbres = await pool.query(dbQuery);
 
         if (dbres.rows.length !== 0) {
-            if (dbres.rows[0].password === "") {
-                // Empty password not possible
-
-                res.redirect('/login_page/loginPage.html?error=-1');
-            } else if (req.body['user-password'] === dbres.rows[0].password) {
+            const boolPassword = await bcrypt.compare(req.body['user-password'], dbres.rows[0].password);
+            if (boolPassword) {
                 // Correct password
-
                 res.redirect('/experiment_page/index.html');
             } else {
                 // Incorrect password
-                
-                res.redirect('/login_page/loginPage.html?error=-2');
+                res.redirect('/login_page/loginPage.html?error=-1');
             }
         } else {
             // Not signed up
 
-            res.redirect('/login_page/loginPage.html/error=-3');
+            res.redirect('/login_page/loginPage.html/error=-2');
         }
     } catch (err) {
         console.log(err);
@@ -181,7 +180,7 @@ async function sendOTP(userMail, userOTP) {
         secure: false,
         auth: {
             user: "digichit1@gmail.com",
-            pass: "iaixrqyjqxrzdyyr",
+            pass: "fplthypgolinsxkw",
             // pass: "digichit#123"
         },
         tls: {
