@@ -88,18 +88,8 @@ app.post('/signup_page/signUp.html', async(req, res) => {
         // Hash the password
         const hashPass = await bcrypt.hash(req.body['user-password'], 10);
 
-        // Creating query to insert email, password, etc into the database
-        let dbQuery = `
-        INSERT INTO faculty_information(email, password)
-        VALUES (
-            '${req.body["user-email"]}', 
-            '${hashPass}'
-        );`;
-
-        const pool = createPool();
-
-        const dbres = await pool.query(dbQuery)
-
+        req.session.email = req.body['user-email'];
+        req.session.hashPass = hashPass;
         req.session.userOTP = userOTP;
 
         res.redirect('/otp_page/otpPage.html');
@@ -112,10 +102,22 @@ app.post('/forgot_password/forgotPass.html', (req, res) => {
     res.redirect('/');    
 });
 
-app.post('/otp_page/otpPage.html', (req, res) => {
-    const userOTP = req.session.userOTP;
+app.post('/otp_page/otpPage.html', async(req, res) => {
+    if (req.body['user-otp'] == req.session.userOTP) {
 
-    if (req.body['user-otp'] == userOTP) {
+        // Creating query to insert email, password, etc into the database
+        let dbQuery = `
+        INSERT INTO faculty_information(email, password)
+        VALUES (
+            '${req.session.email}', 
+            '${req.session.hashPass}'
+        );`;
+
+        const pool = createPool();
+        const dbres = await pool.query(dbQuery)
+        
+        delete req.session.email;
+        delete req.session.hashPass;
         delete req.session.userOTP;
         res.redirect('/');
     } else {
