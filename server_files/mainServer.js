@@ -41,11 +41,15 @@ app.get('/', (req, res) => {
 })
 
 app.get('/login_page/loginPage.html', (req, res) => {
-   res.sendFile(path.join(path.resolve(__dirname, "../"), "/login_page/loginPage.html")); 
+   res.sendFile(path.join(path.resolve(__dirname, "../"), "/login_page/loginPage.html"));
 });
 
 app.get('/forgot_password/forgotPass.html', (req, res) => {
     res.sendFile(path.join(path.resolve(__dirname, "../"), "/forgot_password/forgotPass.html"));
+});
+
+app.get('/reset_password/resetPass.html', (req, res) => {
+    res.sendFile(path.join(path.resolve(__dirname, "../"), "/reset_password/resetPass.html"));
 });
 
 app.get('/experiment_page/index.html', (req, res) => {
@@ -84,7 +88,7 @@ app.post('/signup_page/signUp.html', async(req, res) => {
         let userOTP = generateOTP();
         // Mail the OTP to the user
         sendOTP(req.body["user-email"], userOTP);
-        
+
         // Hash the password
         const hashPass = await bcrypt.hash(req.body['user-password'], 10);
 
@@ -98,24 +102,21 @@ app.post('/signup_page/signUp.html', async(req, res) => {
     }
 });
 
-app.post('/forgot_password/forgotPass.html', (req, res) => {
-    res.redirect('/');    
-});
-
 app.post('/otp_page/otpPage.html', async(req, res) => {
     if (req.body['user-otp'] == req.session.userOTP) {
-
+        console.log(req.session.email);
+        console.log(req.session.hashPass);
         // Creating query to insert email, password, etc into the database
         let dbQuery = `
         INSERT INTO faculty_information(email, password)
         VALUES (
-            '${req.session.email}', 
+            '${req.session.email}',
             '${req.session.hashPass}'
         );`;
 
         const pool = createPool();
         const dbres = await pool.query(dbQuery)
-        
+
         delete req.session.email;
         delete req.session.hashPass;
         delete req.session.userOTP;
@@ -123,6 +124,40 @@ app.post('/otp_page/otpPage.html', async(req, res) => {
     } else {
         res.redirect('/otp_page/otpPage.html?flag=-1');
     }
+});
+
+// ToDO: Actually send an EMAIL with link to reset password page
+// ToDO: Check if user actually exists before coming to this page.
+app.post('/forgot_password/forgotPass.html', (req, res) => {
+    req.session.email = req.body['user-email'];
+    res.redirect('/reset_password/resetPass.html');
+});
+
+// ToDO: Test this functionality first.
+// ToDO: Check if user actually exists before coming to this page.
+app.post('/reset_password/resetPass.html', async(req, res) => {
+    if (req.body["user-password"] !== req.body["user-confirm-password"]) {
+        res.redirect('/reset_password/resetPass.html?err=-1');
+    }
+
+    const pool = createPool();
+
+    const hashPass = await bcrypt.hash(req.body['user-password'], 10);
+
+    let dbQuery = `
+        UPDATE faculty_information
+        SET password = '${hashPass}'
+        WHERE email = '${req.session.email}';
+    `;
+
+    try {
+        const dbres = await pool.query(dbQuery);
+    } catch (err) {
+        console.log(err);
+    }
+
+    delete req.session.email;
+    res.redirect('/');
 });
 
 app.post('/login_page/loginPage.html', async(req, res) => {
@@ -182,7 +217,7 @@ async function sendOTP(userMail, userOTP) {
         secure: false,
         auth: {
             user: "digichit1@gmail.com",
-            pass: "fplthypgolinsxkw",
+            pass: "nbzuxxdsgfyxdlqt",
             // pass: "digichit#123"
         },
         tls: {
@@ -200,8 +235,9 @@ async function sendOTP(userMail, userOTP) {
 }
 
 function generateOTP() {
-    const min = 1000000;
-    return Math.floor(Math.random() * min);
+  const min = 100000;
+  const max = 999999;
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function createPool() {

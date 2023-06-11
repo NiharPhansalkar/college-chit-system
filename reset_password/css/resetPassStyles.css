@@ -49,11 +49,6 @@ body {
     background: rgba(255,255,255,0.8);
     border-radius: 50%;
 }
-/*
-.forgot-pswd {
-    display: none;
-}
-*/
 .form::before {
     content: '';
     position: absolute;
@@ -156,6 +151,12 @@ body {
     font-weight: 900;
     text-decoration: none;
     color: inherit;
+}
+
+#sign-up {
+    position: absolute;
+    left: 0;
+    top: 69px;
 }
 
 /* To change autofill background of browser */
