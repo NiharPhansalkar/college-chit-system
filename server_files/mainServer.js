@@ -78,10 +78,6 @@ app.use(session({
     saveUninitialized: true
 }));
 
-app.post('/forgot_password/forgotPass.html', (req, res) => {
-    res.redirect('/login_page/loginPage.html');
-});
-
 app.post('/signup_page/signUp.html', async(req, res) => {
     try {
         // Generate OTP
@@ -136,8 +132,10 @@ app.post('/forgot_password/forgotPass.html', (req, res) => {
 // ToDO: Test this functionality first.
 // ToDO: Check if user actually exists before coming to this page.
 app.post('/reset_password/resetPass.html', async(req, res) => {
+
     if (req.body["user-password"] !== req.body["user-confirm-password"]) {
-        res.redirect('/reset_password/resetPass.html?err=-1');
+        res.redirect('/reset_password/resetPass.html?error=-1');
+        return;
     }
 
     const pool = createPool();

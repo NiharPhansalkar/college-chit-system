@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/reset_password/css/resetPassStyles.css">
     <script src="/reset_password/js/labelChange.js" defer></script>
+    <script src="/reset_password/js/handlePassNotMatching.js" defer></script>
 </head>
 <body>
     <nav class="navbar">
@@ -23,14 +24,14 @@
                 <div class="input-group">
                     <input type="password" name="user-password" id="user-password" required>
                     <label for="user-password">New Password</label>
-                    <span id="email-error"></span>
+                    <!-- <span id="email-error"></span> -->
                 </div>
                 <div class="input-group">
                     <input type="password" name="user-confirm-password" id="user-confirm-password" required>
                     <label for="user-confirm-password">Confirm New Password</label>
-                    <span id="email-error"></span>
+                    <span id="password-error"></span>
                 </div>
-                <button type="submit" class="submit-btn" id="forgot-button">Send Change Password Link</button>
+                <button type="submit" class="submit-btn" id="forgot-button">Update password</button>
             </form>
         </div>
     </div>
