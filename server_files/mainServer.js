@@ -122,11 +122,27 @@ app.post('/otp_page/otpPage.html', async(req, res) => {
     }
 });
 
-// ToDO: Actually send an EMAIL with link to reset password page
 // ToDO: Check if user actually exists before coming to this page.
-app.post('/forgot_password/forgotPass.html', (req, res) => {
-    req.session.email = req.body['user-email'];
-    res.redirect('/reset_password/resetPass.html');
+app.post('/forgot_password/forgotPass.html', async (req, res) => {
+    const pool = createPool();
+
+    let dbQuery = `
+        select exists (
+            select 1 from faculty_information 
+            where email = '${req.body['user-email']}'
+        );
+    `;
+
+    const dbres = await pool.query(dbQuery);
+
+    const [existanceObj] = dbres.rows;
+    
+    if (existanceObj.exists === 'true') {
+        req.session.email = req.body['user-email'];
+        res.redirect('/reset_password/resetPass.html');
+    } else {
+        res.redirect('/forgot_password/forgotPass.html?error=-1');
+    }
 });
 
 // ToDO: Test this functionality first.
