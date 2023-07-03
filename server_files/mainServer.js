@@ -100,15 +100,11 @@ app.post('/signup_page/signUp.html', async(req, res) => {
 
 app.post('/otp_page/otpPage.html', async(req, res) => {
     if (req.body['user-otp'] == req.session.userOTP) {
-        console.log(req.session.email);
-        console.log(req.session.hashPass);
         // Creating query to insert email, password, etc into the database
-        let dbQuery = `
-        INSERT INTO faculty_information(email, password)
-        VALUES (
-            '${req.session.email}',
-            '${req.session.hashPass}'
-        );`;
+        const dbQuery = {
+            text: 'INSERT INTO faculty_information(email, password) VALUES ($1, $2)',
+            values: [req.session.email, req.session.hashPass]
+        };
 
         const pool = createPool();
         const dbres = await pool.query(dbQuery)
@@ -126,12 +122,10 @@ app.post('/otp_page/otpPage.html', async(req, res) => {
 app.post('/forgot_password/forgotPass.html', async (req, res) => {
     const pool = createPool();
 
-    let dbQuery = `
-        select exists (
-            select 1 from faculty_information 
-            where email = '${req.body['user-email']}'
-        );
-    `;
+    let dbQuery = {
+        text: 'SELECT EXISTS (SELECT 1 FROM faculty_information WHERE email = $1',
+        values: [req.body['user-email']]
+    };
 
     const dbres = await pool.query(dbQuery);
 
@@ -158,11 +152,10 @@ app.post('/reset_password/resetPass.html', async(req, res) => {
 
     const hashPass = await bcrypt.hash(req.body['user-password'], 10);
 
-    let dbQuery = `
-        UPDATE faculty_information
-        SET password = '${hashPass}'
-        WHERE email = '${req.session.email}';
-    `;
+    let dbQuery = {
+        text: 'UPDATE faculty_information SET password = $1 WHERE email = $2',
+        values: [hashPass, req.session.email]
+    };
 
     try {
         const dbres = await pool.query(dbQuery);
@@ -178,10 +171,10 @@ app.post('/login_page/loginPage.html', async(req, res) => {
     const pool = createPool();
 
     // Below is the query to get user password
-    let dbQuery = `
-        SELECT password FROM faculty_information
-        WHERE email='${req.body["user-email"]}';
-    `;
+    let dbQuery = {
+        text: 'SELECT password FROM faculty_information WHERE email = $1',
+        values: [req.body['user-email']]
+    };
 
     try {
         const dbres = await pool.query(dbQuery);
@@ -254,37 +247,21 @@ function generateOTP() {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function createPool() {
+async function createPool() {
+    const keyPromise = fs.readFile(path.join(path.resolve(__dirname, "../../"), "/certs/myLocalhost.key"), 'utf-8');
+    const certPromise = fs.readFile(path.join(path.resolve(__dirname, "../../"), "/certs/myLocalhost.crt"), 'utf-8');
+    const caPromise = fs.readFile(path.join(path.resolve(__dirname, "../../"), "/certs/myCA.pem"), 'utf-8');
+
+    const [key, cert, ca] = await Promise.all([keyPromise, certPromise, caPromise]);
     return new Pool({
         database: "information",
         port: 5432,
         user: "tigress",
         ssl: {
             rejectUnauthorized: false,
-            key: fs
-                .readFileSync(
-                    path.join(
-                        path.resolve(__dirname, "../../"),
-                        "/certs/myLocalhost.key"
-                    )
-                )
-                .toString(),
-            cert: fs
-                .readFileSync(
-                    path.join(
-                        path.resolve(__dirname, "../../"),
-                        "/certs/myLocalhost.crt"
-                    )
-                )
-                .toString(),
-            ca: fs
-                .readFileSync(
-                    path.join(
-                        path.resolve(__dirname, "../../"),
-                        "/certs/myCA.pem"
-                    )
-                )
-                .toString(),
+            key,
+            cert,
+            ca,
         },
     });
 }
