@@ -17,16 +17,11 @@ loginBtn.addEventListener("click", () => {
 })
 window.addEventListener("load", () => {
     if(paramString && paramString.includes("error=-1")) {
-        generalError.textContent = "Password cannot be empty";
-        generalError.style.color = "red";
-        generalError.style.display = "inline-block";
-        generalError.style.marginTop = "13px";
-    } else if (paramString && paramString.includes("error=-2")) {
         generalError.textContent = "Incorrect password";
         generalError.style.color = "red";
         generalError.style.display = "inline-block";
         generalError.style.marginTop = "13px";
-    } else if (paramString && paramString.includes("error=-3")) {
+    } else if (paramString && paramString.includes("error=-2")) {
         generalError.textContent = "Please sign up";
         generalError.style.color = "red";
         generalError.style.display = "inline-block";

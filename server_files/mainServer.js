@@ -122,15 +122,15 @@ app.post('/forgot_password/forgotPass.html', async (req, res) => {
     const pool = await createPool();
 
     let dbQuery = {
-        text: 'SELECT EXISTS (SELECT 1 FROM faculty_information WHERE email = $1',
+        text: 'SELECT EXISTS (SELECT 1 FROM faculty_information WHERE email = $1)',
         values: [req.body['user-email']]
     };
 
     const dbres = await pool.query(dbQuery);
 
     const [existanceObj] = dbres.rows;
-    
-    if (existanceObj.exists === 'true') {
+
+    if (existanceObj.exists === true) {
         req.session.email = req.body['user-email'];
         res.redirect('/reset_password/resetPass.html');
     } else {
@@ -276,10 +276,6 @@ async function createPool() {
 
     const [key, cert, ca] = await Promise.all([keyPromise, certPromise, caPromise]);
     
-    console.log(key);
-    console.log(cert);
-    console.log(ca);
-
     return new Pool({
         database: "information",
         port: 5432,
