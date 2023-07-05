@@ -106,7 +106,7 @@ app.post('/otp_page/otpPage.html', async(req, res) => {
             values: [req.session.email, req.session.hashPass]
         };
 
-        const pool = createPool();
+        const pool = await createPool();
         const dbres = await pool.query(dbQuery)
 
         delete req.session.email;
@@ -118,9 +118,8 @@ app.post('/otp_page/otpPage.html', async(req, res) => {
     }
 });
 
-// ToDO: Check if user actually exists before coming to this page.
 app.post('/forgot_password/forgotPass.html', async (req, res) => {
-    const pool = createPool();
+    const pool = await createPool();
 
     let dbQuery = {
         text: 'SELECT EXISTS (SELECT 1 FROM faculty_information WHERE email = $1',
@@ -140,7 +139,6 @@ app.post('/forgot_password/forgotPass.html', async (req, res) => {
 });
 
 // ToDO: Test this functionality first.
-// ToDO: Check if user actually exists before coming to this page.
 app.post('/reset_password/resetPass.html', async(req, res) => {
 
     if (req.body["user-password"] !== req.body["user-confirm-password"]) {
@@ -148,7 +146,7 @@ app.post('/reset_password/resetPass.html', async(req, res) => {
         return;
     }
 
-    const pool = createPool();
+    const pool = await createPool();
 
     const hashPass = await bcrypt.hash(req.body['user-password'], 10);
 
@@ -168,7 +166,7 @@ app.post('/reset_password/resetPass.html', async(req, res) => {
 });
 
 app.post('/login_page/loginPage.html', async(req, res) => {
-    const pool = createPool();
+    const pool = await createPool();
 
     // Below is the query to get user password
     let dbQuery = {
@@ -224,7 +222,7 @@ async function sendOTP(userMail, userOTP) {
         secure: false,
         auth: {
             user: "digichit1@gmail.com",
-            pass: "nbzuxxdsgfyxdlqt",
+            pass: "fwefdsadwqzrqdxy",
             // pass: "digichit#123"
         },
         tls: {
@@ -248,11 +246,40 @@ function generateOTP() {
 }
 
 async function createPool() {
-    const keyPromise = fs.readFile(path.join(path.resolve(__dirname, "../../"), "/certs/myLocalhost.key"), 'utf-8');
-    const certPromise = fs.readFile(path.join(path.resolve(__dirname, "../../"), "/certs/myLocalhost.crt"), 'utf-8');
-    const caPromise = fs.readFile(path.join(path.resolve(__dirname, "../../"), "/certs/myCA.pem"), 'utf-8');
+    const keyPromise = new Promise((resolve, reject) => {
+        fs.readFile(path.join(path.resolve(__dirname, "../../"), "/certs/myLocalhost.key"), 'utf-8', (err, data) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(data);
+            }
+        });
+    });
+    const certPromise = new Promise((resolve, reject) => {
+        fs.readFile(path.join(path.resolve(__dirname, "../../"), "/certs/myLocalhost.crt"), 'utf-8', (err, data) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(data);
+            }
+        });
+    });
+    const caPromise = new Promise((resolve, reject) => {
+        fs.readFile(path.join(path.resolve(__dirname, "../../"), "/certs/myCA.pem"), 'utf-8', (err, data) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(data);
+            }
+        });
+    });
 
     const [key, cert, ca] = await Promise.all([keyPromise, certPromise, caPromise]);
+    
+    console.log(key);
+    console.log(cert);
+    console.log(ca);
+
     return new Pool({
         database: "information",
         port: 5432,
