@@ -3,6 +3,8 @@ const express = require("express");
 const session = require('express-session'); // To save items to a session
 const bodyParser = require('body-parser'); // To parse form data
 const bcrypt = require('bcrypt'); // To hash passwords
+const crypto = require('crypto'); // Create a secret key
+const jwt = require('jsonwebtoken'); // Create a unique token for forgot password validation
 const fs = require("fs"); // To access the file system through which files will be loaded
 const path = require("path"); // For functions like path.join and path.resolve
 const nodemailer = require("nodemailer"); // To send emails to the user
@@ -83,7 +85,11 @@ app.post('/signup_page/signUp.html', async(req, res) => {
         // Generate OTP
         let userOTP = generateOTP();
         // Mail the OTP to the user
-        sendOTP(req.body["user-email"], userOTP);
+
+        const subject = "Email Confirmation";
+        const html = `<p>Hello! Below is the OTP for your email confirmation! Thank you for using DigiChit!</p>
+                <h2>${userOTP}</h2>`;
+        sendMail(req.body["user-email"], subject, html);
 
         // Hash the password
         const hashPass = await bcrypt.hash(req.body['user-password'], 10);
@@ -118,6 +124,7 @@ app.post('/otp_page/otpPage.html', async(req, res) => {
     }
 });
 
+// Don't forget to properly update the port here!
 app.post('/forgot_password/forgotPass.html', async (req, res) => {
     const pool = await createPool();
 
@@ -132,7 +139,25 @@ app.post('/forgot_password/forgotPass.html', async (req, res) => {
 
     if (existanceObj.exists === true) {
         req.session.email = req.body['user-email'];
-        res.redirect('/reset_password/resetPass.html');
+        const secretKey = generateSecretKey();
+        const token = jwt.sign({email: req.body['user-email']}, secretKey, {
+            expiresIn: '1h',
+        });
+        const currentTime = Date.now();
+        const expTime = currentTime + 60 * 60 * 1000;
+        // Generally port should be 3000 if running on host system
+        const href = `https://localhost:41449/reset_password/resetPass.html?unique=${token}`;
+        const subject = "Reset password";
+        const html = `<p>Please click the link below to reset your password!
+                <h3><a href=${href}>Reset Password</a></h3>`;
+        
+        dbQuery = {
+            text: 'INSERT INTO user_forgot_password(email, jwt_token, expiration_time) VALUES ($1, $2, $3)',
+            values: [req.body['user-email'], token, expTime.toISOString()],
+        }
+
+        await pool.query(dbQuery);
+        sendResetPasswordLink(req.body['user-email'], subject, html);
     } else {
         res.redirect('/forgot_password/forgotPass.html?error=-1');
     }
@@ -140,29 +165,40 @@ app.post('/forgot_password/forgotPass.html', async (req, res) => {
 
 // ToDO: Test this functionality first.
 app.post('/reset_password/resetPass.html', async(req, res) => {
-
-    if (req.body["user-password"] !== req.body["user-confirm-password"]) {
-        res.redirect('/reset_password/resetPass.html?error=-1');
-        return;
-    }
-
-    const pool = await createPool();
-
-    const hashPass = await bcrypt.hash(req.body['user-password'], 10);
-
-    let dbQuery = {
-        text: 'UPDATE faculty_information SET password = $1 WHERE email = $2',
-        values: [hashPass, req.session.email]
-    };
-
-    try {
+    if (req.query.unique) {
+        const pool = await createPool();
+        let dbQuery = {
+            text: 'SELECT jwt_token, expiration_time FROM user_forgot_password WHERE email = $1',
+            values: [req.session.email],
+        };
         const dbres = await pool.query(dbQuery);
-    } catch (err) {
-        console.log(err);
+        const currentTime = new Date();
+        const expTime = dbres.rows[0].expiration_time;
+
+        if (expTime <= currentTime) {
+            // Token expired
+        }
+        if (req.body["user-password"] !== req.body["user-confirm-password"]) {
+            res.redirect(`/reset_password/resetPass.html?error=-1&unique=${req.query.unique}`);
+            return;
+        }
+        const hashPass = await bcrypt.hash(req.body['user-password'], 10);
+
+        let dbQuery = {
+            text: 'UPDATE faculty_information SET password = $1 WHERE email = $2',
+            values: [hashPass, req.session.email]
+        };
+
+        try {
+            const dbres = await pool.query(dbQuery);
+        } catch (err) {
+            console.log(err);
+        }
+
+        delete req.session.email;
+        res.redirect('/');
     }
 
-    delete req.session.email;
-    res.redirect('/');
 });
 
 app.post('/login_page/loginPage.html', async(req, res) => {
@@ -216,14 +252,21 @@ function signUpCheck(userObject) {
     }
 }
 
-async function sendOTP(userMail, userOTP) {
+function generateSecretKey() {
+    const key = crypto.randomBytes(32);
+
+    const secretKey = key.toString('base64');
+
+    return secretKey;
+}
+
+async function sendMail(userMail, subject, html) {
     let transporter = nodemailer.createTransport({
-        host: "smtp.gmail.com",
+        host: 'smtp.gmail.com',
         secure: false,
         auth: {
             user: "digichit1@gmail.com",
             pass: "fwefdsadwqzrqdxy",
-            // pass: "digichit#123"
         },
         tls: {
             rejectUnauthorized: false,
@@ -233,9 +276,8 @@ async function sendOTP(userMail, userOTP) {
     let info = await transporter.sendMail({
         from: "DigiChit <digichit1@gmail.com>",
         to: `${userMail}`,
-        subject: "Email Confirmation",
-        html: `<p>Hello! Below is the OTP for your email confirmation! Thank you for using DigiChit!</p>
-            <h2>${userOTP}</h2>`,
+        subject: subject 
+        html: html,
     });
 }
 

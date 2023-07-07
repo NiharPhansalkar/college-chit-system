@@ -7,6 +7,11 @@ create table subjects (
     subject_id serial primary key,
     subject_name varchar (255) not null
 );
+create table user_forgot_password(
+    email varchar(255) unique not null,
+    jwt_token varchar (1024) not null,
+    expiration_time TIMESTAMPTZ
+);
 create table faculty_subjects (
     faculty_id int not null,
     subject_id int not null,
