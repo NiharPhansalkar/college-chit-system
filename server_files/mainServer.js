@@ -176,8 +176,18 @@ app.post('/reset_password/resetPass.html', async(req, res) => {
         const expTime = dbres.rows[0].expiration_time;
 
         if (expTime <= currentTime) {
-            // Token expired
+            let dbQuery = {
+                text: 'DELETE FROM user_forgot_password WHERE email = $1',
+                values: [req.session.email],
+            }
+
+            await pool.query(dbQuery);
+            res.redirect('/forgot_password/forgotPass.html?timeout');
+            return;
         }
+        
+        const jwtToken = dbres.rows[0].jwt_token;
+        const decodedToken = jwt.verify(jwtToken, );
         if (req.body["user-password"] !== req.body["user-confirm-password"]) {
             res.redirect(`/reset_password/resetPass.html?error=-1&unique=${req.query.unique}`);
             return;
