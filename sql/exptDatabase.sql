@@ -9,7 +9,7 @@ create table subjects (
 );
 create table user_forgot_password(
     email varchar(255) unique not null,
-    jwt_token varchar (1024) not null,
+    unique_token varchar (1024) not null,
     expiration_time TIMESTAMPTZ
 );
 create table faculty_subjects (

@@ -1,8 +1,18 @@
 #! /usr/bin/bash
 
+set -o errexit
+set -o nounset
+set -o pipefail
+
 # Before running this script, please download postgresql-server based on your distro.
 
-read -rp "Enter name for your server file (for default enter myLocalhost): " NAME
+dev_section=$(sed -n '/^development:/,/^[a-z]/p' database.yml)
+
+# Extract individual parameters from database.yml file using 'sed'
+db_name=$(echo "$dev_section" | sed -n 's/^[[:space:]]*database:[[:space:]]*//p')
+db_port=$(echo "$dev_section" | sed -n 's/^[[:space:]]*port:[[:space:]]*//p')
+db_user=$(echo "$dev_section" | sed -n 's/^[[:space:]]*user:[[:space:]]*//p')
+server_file=$(echo "$dev_section" | sed -n 's/^[[:space:]]*server_file:[[:space:]]*//p')
 
 # Creating required DB connections
 
@@ -20,18 +30,14 @@ fi
 mkdir "$create_dir" && cd "$create_dir"
 initdb -D .
 sed -i -e "$ a hostssl all             all             127.0.0.1/32            scram-sha-256" pg_hba.conf
-read -rp "Enter your port for the database(for default, enter 5432) " db_port
 
 sed -i "64s/^#//; 64s/5432/$db_port/" postgresql.conf
 sed -i "105s/^#//; 105s/off/on/" postgresql.conf
 sed -i "106s/^#//; 106s/''/'..\/certs\/myCA.pem'/" postgresql.conf
-sed -i "107s/^#//; 107s/'server.crt'/'..\/certs\/$NAME.crt'/" postgresql.conf
-sed -i "110s/^#//; 110s/'server.key'/'..\/certs\/$NAME.key'/" postgresql.conf
+sed -i "107s/^#//; 107s/'server.crt'/'..\/certs\/$server_file.crt'/" postgresql.conf
+sed -i "110s/^#//; 110s/'server.key'/'..\/certs\/$server_file.key'/" postgresql.conf
 
 pg_ctl -D . -l logfile start
-
-read -rp "Enter the name of the database (for current implementation, please enter 'information') " db_name
-read -rp "Enter the name of the user (for current implementation, please enter 'tigress') " db_user
 
 createdb -U "$db_user" -p "$db_port" "$db_name"  
 psql -d "$db_name" -U "$db_user" -p "$db_port" -f "../college-chit-system/sql/exptDatabase.sql"

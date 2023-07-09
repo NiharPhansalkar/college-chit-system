@@ -1,0 +1,6 @@
+---
+development:
+  database: information
+  port: 5432
+  user: tigress
+  server_file: myLocalhost

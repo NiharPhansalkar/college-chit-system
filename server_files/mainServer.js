@@ -4,7 +4,6 @@ const session = require('express-session'); // To save items to a session
 const bodyParser = require('body-parser'); // To parse form data
 const bcrypt = require('bcrypt'); // To hash passwords
 const crypto = require('crypto'); // Create a secret key
-const jwt = require('jsonwebtoken'); // Create a unique token for forgot password validation
 const fs = require("fs"); // To access the file system through which files will be loaded
 const path = require("path"); // For functions like path.join and path.resolve
 const nodemailer = require("nodemailer"); // To send emails to the user
@@ -139,25 +138,23 @@ app.post('/forgot_password/forgotPass.html', async (req, res) => {
 
     if (existanceObj.exists === true) {
         req.session.email = req.body['user-email'];
-        const secretKey = generateSecretKey();
-        const token = jwt.sign({email: req.body['user-email']}, secretKey, {
-            expiresIn: '1h',
-        });
+        const uniqueToken = generateRandomToken().replaceAll("-", "");
         const currentTime = Date.now();
-        const expTime = currentTime + 60 * 60 * 1000;
+        const expTime = new Date(currentTime.getTime() + 60 * 60 * 1000).toUTCString();
         // Generally port should be 3000 if running on host system
-        const href = `https://localhost:41449/reset_password/resetPass.html?unique=${token}`;
+        const href = `https://localhost:41449/reset_password/resetPass.html?unique=${uniqueToken}`;
         const subject = "Reset password";
         const html = `<p>Please click the link below to reset your password!
                 <h3><a href=${href}>Reset Password</a></h3>`;
-        
+
         dbQuery = {
-            text: 'INSERT INTO user_forgot_password(email, jwt_token, expiration_time) VALUES ($1, $2, $3)',
-            values: [req.body['user-email'], token, expTime.toISOString()],
-        }
+            text: 'INSERT INTO user_forgot_password(email, unique_token, expiration_time) VALUES ($1, $2, $3)',
+            values: [req.body['user-email'], randomToken, expTime]
+        };
 
         await pool.query(dbQuery);
-        sendResetPasswordLink(req.body['user-email'], subject, html);
+        
+        sendResetPasswordLink(req.body['user-email'], subject, html, token);
     } else {
         res.redirect('/forgot_password/forgotPass.html?error=-1');
     }
@@ -165,33 +162,29 @@ app.post('/forgot_password/forgotPass.html', async (req, res) => {
 
 // ToDO: Test this functionality first.
 app.post('/reset_password/resetPass.html', async(req, res) => {
-    if (req.query.unique) {
-        const pool = await createPool();
+    const pool = await createPool();
+    let dbQuery = {
+        text: 'SELECT unique_token, expiration_time FROM user_forgot_password WHERE email = $1',
+        values: [req.session.email]
+    };
+    const dbres = await pool.query(dbQuery);
+    const currentTime = new Date();
+    const expTime = dbres.rows[0].expiration_time;
+
+    if (expTime <= currentTime) {
         let dbQuery = {
-            text: 'SELECT jwt_token, expiration_time FROM user_forgot_password WHERE email = $1',
+            text: 'DELETE FROM user_forgot_password WHERE email = $1',
             values: [req.session.email],
-        };
-        const dbres = await pool.query(dbQuery);
-        const currentTime = new Date();
-        const expTime = dbres.rows[0].expiration_time;
-
-        if (expTime <= currentTime) {
-            let dbQuery = {
-                text: 'DELETE FROM user_forgot_password WHERE email = $1',
-                values: [req.session.email],
-            }
-
-            await pool.query(dbQuery);
-            res.redirect('/forgot_password/forgotPass.html?timeout');
-            return;
         }
+
+        await pool.query(dbQuery);
+        res.redirect('/forgot_password/forgotPass.html?timeout');
+        return;
+    }
         
-        const jwtToken = dbres.rows[0].jwt_token;
-        const decodedToken = jwt.verify(jwtToken, );
-        if (req.body["user-password"] !== req.body["user-confirm-password"]) {
-            res.redirect(`/reset_password/resetPass.html?error=-1&unique=${req.query.unique}`);
-            return;
-        }
+    const uniqueToken = dbres.rows[0].unique_token;
+    
+    if (req.query.unique && req.query.unique === uniqueToken) {
         const hashPass = await bcrypt.hash(req.body['user-password'], 10);
 
         let dbQuery = {
@@ -208,7 +201,6 @@ app.post('/reset_password/resetPass.html', async(req, res) => {
         delete req.session.email;
         res.redirect('/');
     }
-
 });
 
 app.post('/login_page/loginPage.html', async(req, res) => {
@@ -262,14 +254,6 @@ function signUpCheck(userObject) {
     }
 }
 
-function generateSecretKey() {
-    const key = crypto.randomBytes(32);
-
-    const secretKey = key.toString('base64');
-
-    return secretKey;
-}
-
 async function sendMail(userMail, subject, html) {
     let transporter = nodemailer.createTransport({
         host: 'smtp.gmail.com',
@@ -283,12 +267,18 @@ async function sendMail(userMail, subject, html) {
         },
     });
 
-    let info = await transporter.sendMail({
+    let mailOptions = {
         from: "DigiChit <digichit1@gmail.com>",
         to: `${userMail}`,
         subject: subject 
         html: html,
-    });
+    };
+
+    let info = await transporter.sendMail(mailOptions);
+}
+
+function generateUniqueToken() {
+    return crypto.randomUUID();
 }
 
 function generateOTP() {
