@@ -270,7 +270,7 @@ async function sendMail(userMail, subject, html) {
     let mailOptions = {
         from: "DigiChit <digichit1@gmail.com>",
         to: `${userMail}`,
-        subject: subject 
+        subject: subject,
         html: html,
     };
 
